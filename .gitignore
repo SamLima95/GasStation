@@ -1,0 +1,58 @@
+# GasStation - Git ignore
+
+# Dependências
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+vendor/
+
+# Build / artefatos
+dist/
+build/
+*.egg-info/
+.eggs/
+out/
+.next/
+.nuxt/
+
+# Ambiente e secrets
+.env
+.env.local
+.env.*.local
+*.pem
+secrets/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs e cache
+*.log
+logs/
+.cache/
+tmp/
+temp/
+
+# Docker
+.docker/
+
+# Testes e cobertura
+coverage/
+.nyc_output/
+.pytest_cache/
+htmlcov/
+.tox/
+
+# Banco de dados local (se usar arquivos)
+*.db
+*.sqlite
