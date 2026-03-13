@@ -1,0 +1,619 @@
+AUTARQUIA DE ENSINO SUPERIOR DE ARCOVERDE
+CENTRO DE ENSINO SUPERIOR DE ARCOVERDE
+CURSO SUPERIOR EM ANÁLISE E DESENVOLVIMENTO DE SISTEMAS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GAS STATION
+________________
+
+
+Relatório Técnico 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SAMUEL LIMA
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ARCOVERDE - PE
+2026
+SAMUEL LIMA
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GAS STATION
+
+
+
+
+
+
+
+
+Relatório Técnico apresentado como requisito parcial para a disciplina de Projeto de Desenvolvimento de Sistemas Web / Projeto de Desenvolvimento de Sistema Corporativo, do curso superior em Análise em Desenvolvimento de Sistemas, sob orientação do Profº Dennys Cavalcanti Carvalho.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ARCOVERDE - PE
+2026
+HISTÓRICO DE REVISÃO
+
+
+
+
+
+
+
+
+Data
+	Versão
+	Descrição
+	04/02/2025
+	1.0
+	Elaboração dos primeiros conteúdos para implementação no documento.
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+
+
+________________
+
+
+SUMÁRIO
+
+
+1 DOCUMENTO DE DEFINIÇÃO DE ESCOPO (DDE)        6
+1.1. INTRODUÇÃO        6
+1.2. VISÃO GERAL DO DOCUMENTO        6
+1.3. IDENTIFICAÇÃO DO PROJETO        6
+1.4. OBJETIVOS DO PROJETO        6
+1.5. JUSTIFICATIVA        7
+1.6. IDENTIFICAÇÃO DOS REQUISITOS        7
+1.6.1. Prioridades dos Requisitos        7
+1.7. ESCOPO DO PRODUTO E ENTREGÁVEIS        8
+1.7.1. Funcionalidades Previstas        8
+1.7.2. Entregáveis        8
+1.8. PREMISSAS E RESTRIÇÕES        8
+1.8.1. Premissas        8
+1.8.2. Restrições        8
+1.9. CRITÉRIOS DE ACEITAÇÃO DO PROJETO        9
+1.10. EXCLUSÕES DO ESCOPO        9
+1.11. STAKEHOLDERS ENVOLVIDOS        9
+1.12. RISCOS INICIAIS        9
+2 DOCUMENTO DE ESPECIFICAÇÃO DE REQUISITOS (ERS)        11
+2.1. REQUISITOS FUNCIONAIS        11
+2.2. REQUISITOS NÃO FUNCIONAIS        11
+2.3. REGRAS DE NEGÓCIO        11
+3 DOCUMENTO DE ESPECIFICAÇÃO DE MODELAGEM (DEM)        13
+3.1 MODELAGEM DE DADOS        13
+3.1.1 Entidade-Relacionamento        13
+3.1.2 Dicionário de Dados        13
+3.2 MODELAGEM COMPORTAMENTAL        13
+3.2.1 Diagrama de Sequência        13
+3.2.2 Diagrama de Estados        13
+3.3. MODELAGEM ESTRUTURAL        13
+3.3.1 Diagrama de Caso de Uso        13
+3.3.2 Diagrama de Componentes        13
+3.3.3 Diagrama de Arquitetura        13
+3.4 MAPEAMENTO OBJETO-RELACIONAL (ORM)        13
+3.5 BPMN (BUSINESS PROCESS MODEL AND NOTATION)        13
+4 DOCUMENTO DE ESPECIFICAÇÃO DE INTERFACES (DEI)        14
+4.1. WIREFRAMES        14
+4.2. MOCKUPS        14
+4.3. FLUXO DE NAVEGAÇÃO        14
+5 DOCUMENTAÇÃO TÉCNICA        15
+5.1. ARQUITETURA DO SISTEMA        15
+5.1.1. Segmentação da Arquitetura        15
+5.2. TECNOLOGIAS UTILIZADAS        15
+5.2.1 Frontend        15
+5.2.2. Backend        15
+5.2.3. Banco de Dados        15
+5.2.4. Ferramentas de Apoio        15
+5.2.5. Padrões Adotados        15
+5.2.6. Boas Práticas e Convenções        16
+5.2.7. Requisitos de Infraestrutura        17
+5.2.8. APIs e Integrações        17
+5.2.9. Caracterização da API        17
+5.3. REPOSITÓRIO E CÓDIGO-FONTE        17
+6. MANUAL DO USUÁRIO        18
+7. REFERÊNCIAS        20
+8. APÊNDICE        21
+
+
+1 DOCUMENTO DE DEFINIÇÃO DE ESCOPO (DDE)
+1.1 INTRODUÇÃO
+O GasStation é um software corporativo desenvolvido para o setor de distribuição de gás liquefeito de petróleo (GLP). Destina-se a distribuidoras de grande e médio porte que realizam venda e entrega de botijões (vasilhames) e que precisam substituir processos manuais, planilhas e anotações em papel por uma gestão integrada e rastreável. O sistema atende necessidades estratégicas, operacionais e gerenciais dessas empresas, suportando múltiplos usuários, grandes volumes de dados, integração com outros sistemas e conformidade regulatória.
+A ideia central da solução é funcionar como uma plataforma de governança de ativos e conformidade, e não apenas como uma ferramenta de vendas. O GasStation integra em um único ecossistema as áreas de vendas e pedidos, estoque de vasilhames, logística de entregas, financeiro (caixa, contas a receber, inadimplência e limite de crédito), RH e frota, além de controle de identidade e auditoria. A arquitetura é baseada em microsserviços com mensageria (RabbitMQ) e processamento assíncrono, com visão centralizada para múltiplas filiais (holding), interoperabilidade com NF-e/NFC-e, padrões da ANP e serviços de roteirização, garantindo rastreabilidade de ativos, auditoria e tomada de decisão baseada em dados.
+1.2 VISÃO GERAL DO DOCUMENTO
+Este documento apresenta o escopo detalhado do GasStation, uma plataforma corporativa destinada à gestão integrada de distribuidoras de gás (pequeno e médio porte), atuando como mapa e referência para todo o projeto. Nele estão reunidas as definições de escopo, objetivos, entregáveis e restrições que orientam o desenvolvimento da solução, incluindo a visão de negócio, os requisitos funcionais e não funcionais, a arquitetura técnica (microsserviços, mensageria, integrações), as regras de negócio, a governança e a conformidade (holding, auditoria, interoperabilidade com NF-e, ANP e roteirização). Ao seguir esta visão geral, a equipe e os stakeholders dispõem de uma base única para acompanhar o que será construído e em que condições.
+
+
+1.3 IDENTIFICAÇÃO DO PROJETO 
+Nome do Projeto: Gas Station
+Autor: Samuel Lima
+1.4 OBJETIVOS DO PROJETO 
+Objetivo Geral: 
+* Desenvolver uma plataforma corporativa de governança de ativos e conformidade (GasStation) para distribuidoras de gás de pequeno e médio porte, integrando vendas, estoque, logística, financeiro, RH/frota e auditoria em arquitetura de microsserviços.
+* Objetivos Específicos: Levantar e documentar requisitos funcionais e não funcionais com base no problema das distribuidoras e nas exigências de sistema corporativo (holding, RBAC, auditoria, interoperabilidade).
+* Definir a arquitetura do sistema em microsserviços (Vendas/Pedidos, Estoque, Logística, Financeiro, RH/Frota, Identidade e Auditoria), com comunicação via API REST e RabbitMQ e separação front-end e back-end.
+* Especificar e implementar o módulo de identidade e controle de acesso (RBAC, autenticação segura, permissões por módulo e por unidade) e trilhas de auditoria imutáveis para compliance.
+* Implementar os subsistemas de estoque de vasilhames (entrada, saída, retorno, rastreabilidade por tipo P13/P45) e de vendas/pedidos (comodato, formas de pagamento, integração com NF-e/NFC-e).
+* Implementar os módulos de logística (rotas, entregas, integração com roteirização externa) e financeiro (caixa, contas a receber, inadimplência, limite de crédito).
+* Garantir a visão de holding (multi-unidade): gestão centralizada de filiais/depósitos, consolidação de estoques e resultados financeiros e regras por unidade.
+* Integrar a plataforma com ecossistema externo (NF-e/NFC-e, padrões ANP, serviços de roteirização), com APIs versionadas, tratamento de falhas e logs de integração.
+* Implementar dashboard gerencial com KPIs (faturamento, margem, ticket médio, giro de estoque, inadimplência, desempenho por entregador), com filtros por período e unidade e atualização dinâmica.
+* Validar a solução por meio de testes unitários, de integração, de contrato entre microsserviços e de carga, além de garantir segurança (LGPD, criptografia, rate limiting) e infraestrutura containerizada (Docker) com pipeline de CI/CD.
+1.5 JUSTIFICATIVA
+O setor de distribuição de GLP no Brasil é relevante para a economia — consumo da ordem de 7,3 milhões de toneladas/ano e cerca de 60 mil revendas (ANP, 2025). Muitas delas são micro e pequenas empresas que ainda usam processos manuais, planilhas e papel, o que gera erros, perda de controle de estoque e de caixa, rotas ineficientes e dificuldade para enxergar o lucro real. Estudos indicam que o segmento sofre com falta de capital e gestão centralizada no proprietário (SILVA JÚNIOR, 2024), e que a otimização de rotas pode reduzir custos com combustível em até 22% (BRAZIL SISTEM, 2025).
+
+
+O GasStation justifica-se ao substituir esse modelo por uma plataforma corporativa que integra vendas, estoque, logística, financeiro e auditoria em arquitetura de microsserviços, com visão multi-unidade e interoperabilidade (NF-e, ANP, roteirização). Assim, reduz erros operacionais, permite controle em tempo real e decisões baseadas em dados, atendendo à conformidade regulatória e à necessidade de crescimento do setor.
+
+
+1.6 IDENTIFICAÇÃO DOS REQUISITOS 
+
+
+Por convenção, os requisitos são referenciados pelo nome da subseção onde estão descritos, seguido do seu identificador, conforme o esquema abaixo:
+* O requisito funcional [Cadastro de Usuários.RF-01] está localizado na subseção “Requisitos Funcionais”, dentro do bloco identificado como [RF-01].
+* O requisito não funcional [Disponibilidade.NF-04] encontra-se na seção “Requisitos Não Funcionais de Confiabilidade”, no bloco identificado como [NF-04].
+1.6.1 Prioridades dos Requisitos
+Os requisitos do sistema são classificados em três níveis de prioridade:
+* Essencial: indispensável para o funcionamento do sistema. Sem ele, o sistema não opera. Deve ser obrigatoriamente implementado.
+* Importante: afeta a qualidade do funcionamento. O sistema pode ser utilizado sem esse requisito, mas de forma insatisfatória. Sua implementação é recomendada.
+* Desejável: não interfere nas funcionalidades básicas. O sistema funciona bem sem ele. Pode ser incluído em versões futuras, caso não haja tempo para implementá-lo na versão atual.
+
+
+
+
+1.7 ESCOPO DO PRODUTO E ENTREGÁVEIS 
+
+
+1.7.1 Funcionalidades Previstas
+O GasStation oferece as seguintes funcionalidades principais: (i) Gestão de identidade e acesso: cadastro de usuários, perfis RBAC (Admin Holding, Gerente de Filial, Entregador, Financeiro etc.), autenticação segura (JWT/OAuth2), recuperação de senha, controle de sessão e permissões por módulo e por unidade; (ii) Auditoria e rastreamento: registro de ações, histórico de alterações, versionamento e trilhas de auditoria imutáveis para estoque, financeiro e pedidos; (iii) Estoque e vasilhames: controle por tipo (P13, P45), entrada/saída/retorno, rastreabilidade de ativos, alertas de estoque mínimo e previsão de reposição, consolidação por unidade e holding; (iv) Vendas e pedidos: gestão de pedidos (incl. app interno), comodato por cliente, pagamentos (à vista, fiado, cartão, PIX), integração com NF-e/NFC-e; (v) Logística: gestão de rotas, otimização por região com integração a roteirização externa, acompanhamento de entregas em tempo real; (vi) Financeiro: caixa, contas a receber, inadimplência, limite de crédito por cliente, consolidação por unidade e holding; (vii) RH e Frota: cadastro de entregadores e veículos, controle de manutenção, metas comerciais; (viii) Dashboard e relatórios: KPIs (faturamento, margem, ticket médio, giro de estoque, inadimplência, desempenho por entregador), filtros por período e unidade, exportação e atualização dinâmica; (ix) Holding e multi-unidade: gestão centralizada de filiais/depósitos e regras por unidade com override central; (x) Governança e compliance: registro de perdas e avarias, suporte a padrões ANP, integração bidirecional com APIs/Webhooks e documentação de API (OpenAPI/Swagger).
+1.7.2 Entregáveis
+Serão entregues: (i) Código-fonte no repositório Git (GitHub/GitLab), incluindo front-end e back-end dos microsserviços; (ii) Documento de Arquitetura e Documento de Definição de Escopo (DDE); (iii) Documento de Especificação de Requisitos (ERS), Documento de Especificação de Modelagem (DEM) e Documento de Especificação de Interfaces (DEI); (iv) Especificação de APIs (OpenAPI/Swagger) por serviço; (v) Manual do Usuário; (vi) Scripts de banco de dados e configurações Docker/CI-CD; (vii) Relatório técnico completo (este documento) e referências.
+1.8 PREMISSAS E RESTRIÇÕES
+1.8.1 Premissas 
+O projeto assume que: (i) Os usuários (administradores, gerentes, entregadores, financeiro) terão acesso à internet e dispositivos compatíveis (navegador atualizado ou app interno) para acessar a plataforma; (ii) A distribuidora opera ou pretende operar em modelo multi-unidade (holding com filiais/depósitos); (iii) Haverá interesse e capacidade da organização em adotar processos digitais, integração com NF-e/NFC-e e roteirização externa quando parametrizado; (iv) Os dados de estoque, vendas, financeiro e logística poderão ser fornecidos ou migrados para alimentar o sistema; (v) A infraestrutura de hospedagem (ou local) suportará containers (Docker) e, quando aplicável, orquestração (Kubernetes ou similar); (vi) As integrações externas (Sefaz, ANP, roteirização) seguirão contratos e padrões documentados, com disponibilidade dos serviços externos dentro dos SLAs esperados.
+1.8.2 Restrições 
+Limites impostos ao projeto: (i) O projeto deve ser concluído dentro do prazo estabelecido pela disciplina; (ii) O sistema será inicialmente focado em ambiente web (interface responsiva); app nativo mobile pode ser escopo futuro; (iii) Tecnologias definidas: front-end com HTML, CSS, JavaScript e React; back-end com Java e Spring Boot; banco relacional (PostgreSQL ou MySQL), opcionalmente Redis/MongoDB para cache e desempenho; RabbitMQ para mensageria; Docker para containerização; (iv) O escopo atende distribuidoras de pequeno e médio porte, sem customizações enterprise específicas por cliente nesta versão; (v) Integração com sistemas legados de terceiros será feita via API/Webhook, sem substituição direta desses sistemas.
+
+
+1.9 CRITÉRIOS DE ACEITAÇÃO DO PROJETO
+O projeto será considerado aprovado quando: (i) Os microsserviços definidos (Identidade/Auditoria, Vendas/Pedidos, Estoque, Logística, Financeiro, RH/Frota) estiverem implementados com APIs REST documentadas (OpenAPI/Swagger) e comunicação via RabbitMQ onde aplicável; (ii) O sistema atender aos requisitos funcionais essenciais de cadastro de usuários, RBAC, trilhas de auditoria, controle de estoque (P13/P45), pedidos, comodato, caixa e contas a receber, e visão multi-unidade (holding); (iii) A interface web permitir acesso seguro (autenticação JWT ou equivalente) e operação dos fluxos principais por perfil (admin, gerente, entregador, financeiro); (iv) O tempo de carregamento da página inicial não exceder 3 segundos em rede banda larga (métricas via Lighthouse ou similar); (v) Existirem testes automatizados (unitários e de integração) e, quando aplicável, testes de contrato entre serviços; (vi) A documentação técnica (arquitetura, APIs, DDE/ERS/DEM/DEI) e o Manual do Usuário estiverem entregues; (vii) O código-fonte estiver versionado no repositório com pipeline de CI/CD configurado e critérios de segurança atendidos (variáveis sensíveis em .env, proteção contra SQL Injection e XSS, rate limiting nas APIs).
+
+
+1.10 EXCLUSÕES DO ESCOPO 
+* Não haverá, nesta versão, aplicativo mobile nativo (iOS/Android) — a solução é web responsiva; app interno pode ser interface web utilizável em dispositivos móveis. * O sistema não substitui sistemas legados de terceiros (ERP, emissor de NF de outro fornecedor); a integração é feita via API/Webhook. * Não está no escopo customizações enterprise por cliente (módulos sob encomenda). * Integração com gateway de pagamento para cartão de crédito/débito pode ser fase futura; o foco inicial é registro de pagamentos (à vista, fiado, PIX, cartão) e controle de caixa e contas a receber. * Suporte a múltiplos idiomas (i18n) não é obrigatório na primeira entrega.
+
+
+1.11 STAKEHOLDERS ENVOLVIDOS 
+Partes interessadas: (i) Aluno desenvolvedor (Samuel Lima): responsável pela análise, desenho e implementação do sistema e documentação; (ii) Professor orientador (Prof. Dennys Cavalcanti Carvalho): orientação, validação do escopo corporativo e avaliação; (iii) Usuários finais (simulados ou reais): administrador do sistema, gerentes de filial, entregadores, setor financeiro e compliance; (iv) Avaliadores/testers: para validação funcional e aceite conforme critérios da disciplina.
+
+Organizadores: Samuel Lima (projeto acadêmico).
+Participantes: Samuel Lima.
+Administrador do sistema: Perfil a ser utilizado nos testes (Admin Holding ou equivalente).
+Professor orientador: Prof. Dennys Cavalcanti Carvalho.
+Testers: Aluno e/ou colegas/avaliadores da disciplina. 
+
+
+
+
+1.12 RISCOS INICIAIS 
+Riscos identificados: (i) Escopo amplo (ERP/CRM vertical): a quantidade de funcionalidades pode exigir priorização e entregas em fases (MVP primeiro) para cumprir o prazo da disciplina. (ii) Complexidade da arquitetura de microsserviços: curva de aprendizado com RabbitMQ, APIs entre serviços e testes de contrato pode consumir tempo. (iii) Integrações externas: dependência de APIs de terceiros (NF-e, roteirização) e possível indisponibilidade ou mudança de contrato podem atrasar ou limitar funcionalidades. (iv) Falta de familiaridade com ferramentas: uso de Docker, Kubernetes, OpenAPI ou bibliotecas específicas pode exigir tempo de estudo. (v) Conflito de horários: dedicação concorrente a outras disciplinas ou atividades pode impactar o cronograma. Mitigações: priorização clara (MVP), documentação de requisitos e arquitetura já elaborada, e uso de tecnologias com boa documentação (Spring Boot, React).
+
+
+
+
+
+
+
+
+
+
+
+________________
+
+
+2 DOCUMENTO DE ESPECIFICAÇÃO DE REQUISITOS (ERS)
+
+
+2.1 REQUISITOS FUNCIONAIS
+
+
+Requisitos funcionais são as funções que usuários e clientes esperam que o software ofereça. Eles estão diretamente ligados às funcionalidades que o sistema deve fornecer. Segundo Ian Sommerville, requisitos funcionais definem as funcionalidades específicas que um sistema de software deve realizar para atender às necessidades dos usuários e alcançar os objetivos do projeto.
+
+
+* [RF-01] Cadastro de Usuários: O sistema deve permitir o cadastro, edição e exclusão de usuários, com atribuição de perfis (Admin Holding, Gerente de Filial, Entregador, Financeiro etc.) e permissões por módulo e por unidade (RBAC). Atores: Admin Holding, Gerente de Filial. Prioridade: Essencial. Critério de aceitação: O usuário com permissão preenche os campos obrigatórios (nome, e-mail, senha, perfil, unidade quando aplicável) e o sistema registra o usuário e aplica as permissões conforme o perfil; alterações ficam registradas em auditoria.
+* A listagem completa dos requisitos funcionais (RF01 a RF44) está no documento de Análise de Requisitos (AnaliseRequisitos.md), organizada por área: Identidade e Acesso, Auditoria, Estoque e Vasilhames, Vendas e Pedidos, Logística, Financeiro, RH e Frota, Dashboard, Holding e Governança.
+
+
+2.2 REQUISITOS NÃO FUNCIONAIS
+
+
+Os requisitos não funcionais representam atributos de qualidade que um software deve possuir, mesmo que não estejam diretamente ligados às funcionalidades principais. Eles indicam características esperadas em qualquer sistema profissionalmente desenvolvido, como desempenho, segurança, usabilidade e confiabilidade. Além disso, expressam restrições técnicas que o software precisa atender, garantindo que ele funcione de forma eficiente dentro de seu ambiente operacional.
+
+
+* [NF-01] (Desempenho): O tempo de carregamento da página inicial não deve exceder 3 segundos em rede banda larga. Prioridade: Essencial. Critério de medição: Teste com ferramenta de medição (Lighthouse, GTmetrix).
+* [NF-02] (Segurança): Dados sensíveis devem ser criptografados; as APIs devem estar protegidas contra SQL Injection e XSS, com rate limiting e uso de variáveis de ambiente para chaves e senhas. Prioridade: Essencial.
+* [NF-03] (Disponibilidade): Os serviços devem expor health checks e o sistema deve suportar processamento assíncrono (RabbitMQ) para tarefas pesadas, com retry e dead-letter queue. Prioridade: Importante.
+* A listagem completa dos requisitos não funcionais (segurança, performance, escalabilidade, disponibilidade, interoperabilidade) está em AnaliseRequisitos.md (seção 5) e EspecificacaoCorporativa.md (seção 4).
+
+
+2.3 REGRAS DE NEGÓCIO
+
+
+As regras de negócio definem os limites, comportamentos e restrições que regem o funcionamento da aplicação, garantindo conformidade com os objetivos organizacionais e legais. Abaixo estão listadas as principais regras aplicáveis ao sistema:
+
+
+* [RN-01] Permissões por unidade: Toda operação de negócio (pedido, estoque, financeiro, rota) está associada a uma unidade (filial/depósito). O acesso a dados e funções pode ser restrito por unidade (ex.: gerente vê apenas sua filial). Apenas usuários com perfil Admin Holding podem ter visão e permissão sobre todas as unidades. Prioridade: Essencial.
+* [RN-02] Limite de crédito e fiado: O valor a prazo (fiado) não pode exceder o limite de crédito do cliente menos o saldo devedor atual; caso exceda, a venda não é autorizada até regularização ou alteração de limite (override excepcional por perfil autorizado, com registro em auditoria). Prioridade: Essencial.
+* [RN-03] Trilhas de auditoria: Toda movimentação relevante de estoque, financeiro ou pedido gera registro de auditoria imutável (quem, quando, o quê, unidade); registros não podem ser alterados ou apagados. Prioridade: Essencial.
+* A listagem completa das regras de negócio (RN01 a RN34) está no documento RegrasNegocio.md, organizada por área (Estoque, Vendas, Comodato, Financeiro, Logística, RH/Frota, Holding, Compliance).
+________________
+3 DOCUMENTO DE ESPECIFICAÇÃO DE MODELAGEM (DEM)
+
+3.1 MODELAGEM DE DADOS
+
+
+3.1.1 Entidade-Relacionamento
+O modelo ER do GasStation contempla as entidades principais: Usuario, Perfil/Papel, Unidade (Filial/Depósito), Cliente, Pedido, ItemPedido, Vasilhame (tipo P13/P45), MovimentacaoEstoque, Comodato (cliente x vasilhame por unidade), Rota, Entrega, Entregador, Veiculo, Caixa, ContaAReceber, Auditoria e ConfiguracaoUnidade. Relacionamentos: Usuario N:1 Perfil e N:N Unidade (permissões por unidade); Pedido N:1 Cliente e N:1 Unidade; ItemPedido N:1 Pedido e N:1 Vasilhame; MovimentacaoEstoque N:1 Unidade e N:1 Vasilhame; Comodato N:1 Cliente, N:1 Unidade e N:1 Vasilhame; Rota N:1 Unidade e N:1 Entregador; Entrega N:1 Rota e N:1 Pedido; Auditoria registra entidade, id, usuário, data/hora e alteração. O diagrama ER completo deve ser elaborado e inserido como figura (Fonte: autoria própria).
+
+3.1.2 Dicionário de Dados 
+O dicionário de dados descreve, para cada entidade e atributo: nome, tipo (string, inteiro, decimal, data, booleano, etc.), tamanho, obrigatoriedade, chave (PK/FK) e regras (ex.: CPF único, estoque mínimo >= 0). Exemplos: Usuario (id, nome, email, senhaHash, perfilId, ativo, criadoEm); Pedido (id, clienteId, unidadeId, status, valorTotal, dataPedido, dataEntregaPrevista); Vasilhame (id, tipo, descricao, capacidade); MovimentacaoEstoque (id, unidadeId, vasilhameId, tipoMovimentacao, quantidade, data, usuarioId, pedidoId opcional). O dicionário completo deve ser elaborado a partir do modelo ER e inserido em tabela no documento ou no apêndice.
+
+3.2 MODELAGEM COMPORTAMENTAL 
+3.2.1 Diagrama de Sequência        
+Os diagramas de sequência descrevem a interação entre atores e componentes do sistema ao longo do tempo. Exemplos para o GasStation: (i) Fluxo de login: Usuário → Front-end → API Identidade → validação → JWT; (ii) Criação de pedido: Usuário → API Vendas → validação estoque (API Estoque) → registro pedido → publicação evento RabbitMQ (atualização estoque/auditoria); (iii) Confirmação de entrega: Entregador → API Logística → confirmação → eventos para Estoque, Comodato, Financeiro e Auditoria. Cada fluxo crítico deve ser documentado em diagrama de sequência (PlantUML ou similar) e inserido como figura.
+
+3.2.2 Diagrama de Estados
+O diagrama de estados representa os estados possíveis de entidades e as transições. Exemplos: (i) Pedido: Rascunho → Confirmado → EmRota → Entregue / Cancelado; (ii) ContaAReceber: Aberta → ParcialmentePaga → Quitada / Inadimplente; (iii) MovimentacaoEstoque: Registrada → Conciliada (quando aplicável). Os diagramas devem ser elaborados (PlantUML ou similar) e inseridos como figuras (Fonte: autoria própria).
+
+3.3 MODELAGEM ESTRUTURAL
+3.3.1 Diagrama de Caso de Uso        
+Os atores são: Admin Holding, Gerente de Filial, Entregador, Financeiro, Sistema (integrações). Casos de uso principais: Gerenciar usuários e permissões; Gerenciar unidades/filiais; Cadastrar cliente; Criar/editar/cancelar pedido; Registrar movimentação de estoque; Consultar comodato; Gerenciar rotas e entregas; Registrar pagamento e contas a receber; Consultar dashboard e relatórios; Emitir NF (integração); Consultar auditoria. O diagrama de caso de uso deve ser elaborado com inclusão e extensão quando aplicável e inserido como figura.
+
+3.3.2 Diagrama de Componentes
+Os componentes do sistema incluem: Front-end (React), API Gateway ou BFF (opcional), microsserviços (Identidade/Auditoria, Vendas/Pedidos, Estoque, Logística, Financeiro, RH/Frota), mensageria (RabbitMQ), bancos de dados (PostgreSQL/MySQL por serviço ou schema, Redis para cache). O diagrama de componentes deve mostrar as dependências entre esses blocos e ser inserido como figura.
+
+3.3.3 Diagrama de Arquitetura        
+O diagrama de arquitetura descreve a macroestrutura: usuários acessam o front-end (web); o front-end consome as APIs REST dos microsserviços; os microsserviços comunicam-se entre si via API REST (síncrono) e RabbitMQ (assíncrono); cada serviço possui seu banco de dados (ou schema isolado). Incluir também integrações externas (NF-e, roteirização, ANP). O diagrama deve ser elaborado (ex.: C4, ou blocos com legenda) e inserido como figura; a descrição textual está na seção 5.1 deste documento.
+
+3.4 MAPEAMENTO OBJETO-RELACIONAL (ORM)
+O mapeamento ORM descreve como as entidades do domínio são persistidas no banco relacional. No back-end Java/Spring Boot, utiliza-se JPA/Hibernate: entidades anotadas com @Entity, @Table, @Column; relacionamentos com @OneToMany, @ManyToOne, @ManyToMany; auditoria com @CreatedDate, @LastModifiedDate ou tabela de auditoria dedicada. Scripts de criação de tabelas (DDL) devem ser versionados e incluídos no apêndice. O documento pode conter um resumo das entidades e suas tabelas correspondentes.
+
+3.5 BPMN (BUSINESS PROCESS MODEL AND NOTATION)
+Os processos de negócio podem ser modelados em BPMN para fluxos como: Processo de venda (pedido → validação estoque e crédito → confirmação → entrega → baixa estoque e comodato → registro financeiro e auditoria); Processo de movimentação de estoque (solicitação → aprovação se necessário → registro → atualização saldo e auditoria); Processo de roteirização e entrega (definição de rota → alocação entregador → execução → confirmação e eventos). Os diagramas BPMN devem ser elaborados (ex.: Camunda Modeler, bpmn.io) e inseridos como figuras quando aplicável.
+
+
+________________
+4 DOCUMENTO DE ESPECIFICAÇÃO DE INTERFACES (DEI)
+
+
+4.1 WIREFRAMES                        
+Os wireframes representam a estrutura e o layout das telas do GasStation em baixa fidelidade. Devem ser elaborados para: tela de login; dashboard (KPIs e filtros por período/unidade); listagem e formulário de clientes; listagem e formulário de pedidos; tela de estoque por unidade e tipo de vasilhame; tela de rotas e entregas; telas de caixa e contas a receber; cadastro de usuários e permissões; consulta de auditoria. Inserir as figuras com legenda "Figura X – Wireframe [nome da tela]. Fonte: autoria própria (2026)."
+
+4.2 MOCKUPS
+Os mockups representam a interface em maior fidelidade (cores, tipografia, componentes). Devem seguir uma identidade visual consistente e acessível, contemplando as mesmas telas descritas nos wireframes, com destaque para dashboard, formulário de pedido e listagens principais. Inserir as figuras com legenda e fonte conforme padrão ABNT do documento.
+
+4.3 FLUXO DE NAVEGAÇÃO
+O fluxo de navegação descreve como o usuário navega entre as telas: após login, acesso ao menu principal (Dashboard, Clientes, Pedidos, Estoque, Rotas/Entregas, Financeiro, Cadastros, Auditoria); de cada módulo, acesso a listagens, filtros, "Novo" e edição; retorno ao dashboard e saída (logout). Deve ser documentado em diagrama (fluxograma ou mapa de navegação) e inserido como figura.        
+________________
+
+
+5 DOCUMENTAÇÃO TÉCNICA
+
+
+5.1 ARQUITETURA DO SISTEMA
+O GasStation adota arquitetura de microsserviços: o sistema é dividido em serviços independentes por domínio (Identidade e Auditoria, Vendas/Pedidos, Estoque, Logística, Financeiro, RH/Frota), cada um com responsabilidade única, deploy isolado, API REST própria e banco de dados isolado (ou schema por serviço). A comunicação entre serviços é síncrona via API REST e assíncrona via RabbitMQ (eventos de domínio, filas para NF-e, relatórios, notificações). O front-end é desacoplado e consome as APIs dos microsserviços. Deve-se inserir aqui a citação ao Diagrama de Arquitetura (seção 3.3.3) e ao Diagrama de Componentes (seção 3.3.2).
+5.1.1 Segmentação da Arquitetura
+Em cada microsserviço, as responsabilidades são separadas em camadas: (i) Apresentação/API: controllers REST, DTOs de entrada/saída, validação e tratamento de erros; (ii) Aplicação/Serviço: orquestração de casos de uso, chamadas a repositórios e publicação de eventos; (iii) Domínio: entidades e regras de negócio puras; (iv) Infraestrutura: repositórios (persistência), clientes HTTP para outros serviços, publicadores RabbitMQ e adaptadores para integrações externas. A comunicação entre camadas ocorre via interfaces (inversão de dependência), de modo que o domínio não dependa de detalhes de persistência ou mensageria.
+5.2 TECNOLOGIAS UTILIZADAS
+5.2.1 Frontend
+Linguagens e bibliotecas: HTML5, CSS3, JavaScript (ES6+); React (biblioteca de interface); gerenciador de estado (ex.: Context API ou Redux); cliente HTTP (ex.: Axios ou fetch) para consumo das APIs REST; roteamento (ex.: React Router). Versões devem ser documentadas no package.json (ex.: React 18.x). Bibliotecas de estilo: CSS Modules ou biblioteca de componentes (ex.: Material-UI, Chakra UI) conforme definido no projeto.
+
+5.2.2 Backend
+Linguagem e framework: Java 17+ e Spring Boot (versão estável atual, ex.: 3.x); Spring Web para APIs REST; Spring Security para autenticação (JWT ou OAuth2) e autorização; Spring Data JPA para persistência; Spring AMQP ou similar para RabbitMQ. Cada microsserviço é um projeto Maven ou Gradle independente. Versões devem constar no pom.xml ou build.gradle.
+
+5.2.3 Banco de Dados
+SGBD: PostgreSQL ou MySQL para dados críticos (pedidos, clientes, estoque, financeiro, usuários, auditoria). Opcionalmente Redis para cache (dashboards, sessões) e MongoDB para documentos ou logs quando aplicável. ORM: JPA/Hibernate no back-end Java para mapeamento objeto-relacional.
+
+5.2.4 Ferramentas de Apoio
+Docker e Docker Compose para containerização e ambiente local; Git para versionamento; Postman ou Insomnia para testes de API; OpenAPI/Swagger para documentação das APIs; ferramentas de build (Maven/Gradle, npm/yarn); IDE (ex.: IntelliJ IDEA, VS Code); opcionalmente Kubernetes para orquestração; ferramentas de IA e LaTeX/PlantUML para documentação e diagramas, quando utilizadas.
+
+5.2.5 Padrões Adotados
+Repository: abstração de persistência por entidade, isolando a lógica de acesso a dados. Dependency Injection: uso do container Spring para injeção de dependências (controllers, services, repositories). DTO (Data Transfer Objects): comunicação entre camadas e na API sem expor entidades de domínio. Factory/Builder: construção de objetos complexos quando aplicável. Singleton: gerenciamento de beans pelo Spring. Estratégia de retry e circuit breaker para chamadas a outros serviços e integrações externas, quando aplicável. 
+
+
+5.2.6 Boas Práticas e Convenções
+SOLID: O DIP (Princípio da Inversão de Dependência) é aplicado ao depender de interfaces (ex.: repositórios, clientes de mensageria) em vez de implementações concretas, de modo que o domínio e a aplicação não dependam do banco de dados ou do RabbitMQ diretamente. A SRP (Responsabilidade Única) é respeitada ao separar controllers (HTTP), services (casos de uso) e repositories (persistência). Clean Code: Uso de nomes significativos para classes, métodos e variáveis; funções pequenas com responsabilidade única; código autodocumentado, evitando comentários óbvios. DTOs: A comunicação entre a API e a camada de serviço utiliza DTOs de entrada e saída; as entidades de domínio não são expostas na API, garantindo encapsulamento e evolução independente do contrato. Tratamento de erros: Uso de @ControllerAdvice (ou equivalente) para tratamento global de exceções, retornando JSON padronizado (código HTTP, mensagem amigável, opcionalmente código de erro) sem expor stack traces ao cliente. Versionamento: Uso de tags no Git (ex.: v1.0.0) e mensagens de commit claras (ex.: convenção Conventional Commits). Padrão de resposta de API: Respostas REST padronizadas em JSON (ex.: { "data": ..., "error": null, "message": "..." } em sucesso; "error" preenchido em falha). Injeção de dependência: Resolução via container Spring (@Autowired ou construtor). Mapeamento: Uso de MapStruct, ModelMapper ou mapeamento manual para conversão entre entidades e DTOs. Segurança: Chaves, senhas e URLs sensíveis em variáveis de ambiente (.env ou config do servidor); senhas armazenadas com hash (ex.: BCrypt); criptografia de dados sensíveis em repouso quando exigido pela política.
+
+5.2.7 Requisitos de Infraestrutura
+Para execução do software: SO compatível com Docker (Linux recomendado, Windows/macOS com Docker Desktop); memória RAM mínima sugerida 4 GB para ambiente de desenvolvimento (8 GB se todos os microsserviços e RabbitMQ/PostgreSQL/Redis forem locais); processador multicore. Ambiente de desenvolvimento: Node.js e npm/yarn para front-end; JDK 17+ e Maven ou Gradle para back-end; Docker e Docker Compose; Git. Para produção: hospedagem que suporte containers (ou VMs) com possibilidade de orquestração (Kubernetes ou similar) e balanceamento de carga quando necessário.
+
+5.2.8 APIs e Integrações
+Serviços externos previstos no GasStation: (i) NF-e/NFC-e: integração com ambiente da Sefaz (emissão e consulta de notas) via API do provedor escolhido; uso assíncrono via fila RabbitMQ com retry e dead-letter; (ii) Roteirização: integração com Google Maps/Fleet ou similar para otimização de rotas e cálculo de distâncias; chamada à API externa no fluxo de planejamento de rotas; (iii) Padrões ANP: envio ou disponibilização de dados para conformidade regulatória conforme documentação oficial. Em todos os casos: autenticação conforme contrato da API, tratamento de timeout e falhas, logs de integração e versionamento da integração quando aplicável.
+
+5.2.9 Caracterização da API
+O projeto expõe APIs REST: recursos identificados por URLs (ex.: /api/v1/pedidos, /api/v1/clientes), métodos HTTP (GET, POST, PUT, PATCH, DELETE), troca de dados em JSON (Content-Type: application/json). Versionamento da API (ex.: /v1/) para compatibilidade futura. Documentação via OpenAPI (Swagger); autenticação via Bearer token (JWT). Respostas padronizadas (estrutura data/error/message ou equivalente) e códigos HTTP semânticos (200, 201, 400, 401, 404, 500).
+
+5.3 REPOSITÓRIO E CÓDIGO-FONTE
+1. Link do repositório: deve ser informado pelo autor (ex.: https://github.com/[usuario]/GasStation). 2. Estrutura de pastas sugerida (a ser ajustada conforme implementação real): GasStation/ |-- docs/ (documentação: DDE, ERS, DEM, DEI, AnaliseRequisitos, etc.) |-- frontend/ (aplicação React: src/components, src/pages, src/services, public) |-- backend/ ou microservicos/ (cada serviço em subpasta: auth-service, vendas-service, estoque-service, logistica-service, financeiro-service, rh-frota-service) |-- docker/ ou docker-compose.yml (configuração de containers) |-- scripts/ (DDL, seeds, migrações se houver). 3. Conteúdo das pastas: em cada microsserviço, a lógica de negócio fica nas camadas de domínio e aplicação (services, entities); os testes em src/test (unitários e de integração); configurações em application.yml ou .env; documentação de API em OpenAPI na pasta do serviço ou em docs. O revisor encontrará os controllers na camada de apresentação e os repositórios na camada de infraestrutura.
+
+________________
+6 MANUAL DO USUÁRIO
+
+
+O Manual do Usuário do GasStation é redigido em linguagem simples, de forma visual e didática, para que operadores, gerentes e administradores consigam usar o sistema sem conhecimentos técnicos. Assume-se que o usuário tem conhecimentos básicos de informática (navegação na web, uso de mouse e teclado).
+
+Requisitos para acessar o sistema
+Antes de começar, o usuário deve dispor de: (i) Navegador recomendado: Chrome, Edge ou Firefox (versão atual); (ii) Resolução de tela ideal: mínimo 1280x720; (iii) Conexão com a internet (ou rede interna onde o sistema estiver hospedado); (iv) Credenciais de teste para avaliação: usuário e senha padrão devem ser fornecidos pelo administrador ou na documentação de entrega (ex.: usuário: admin@gasstation.local, senha: [definida pelo projeto]) — o avaliador deve usar essas credenciais para entrar no sistema.
+
+Estrutura do manual (tutorial passo a passo)
+O manual deve ser organizado por fluxos de tarefas, e não apenas por telas. Exemplos de títulos: "Como fazer login no sistema"; "Como cadastrar um novo cliente"; "Como criar um pedido de entrega"; "Como registrar a entrega e o retorno de botijões"; "Como consultar o estoque da sua filial"; "Como registrar um pagamento e consultar contas a receber"; "Como visualizar o dashboard e os relatórios"; "Como alterar sua senha ou recuperar acesso". Para cada fluxo: (i) Incluir prints de tela (screenshots) das páginas do sistema; (ii) Usar setas, círculos ou numeração (1, 2, 3) sobre o print para indicar onde clicar; (iii) Texto curto e direto, por exemplo: "1. Clique no botão **Novo**; 2. Preencha os campos obrigatórios marcados com asterisco; 3. Clique em **Salvar**."
+
+Glossário de mensagens e alertas
+Incluir uma tabela com as principais mensagens que o sistema exibe, para que o usuário entenda o significado. Exemplos: "Mensagem: 'Limite de crédito excedido' — Significa que o valor do pedido a prazo supera o limite permitido para o cliente; regularize o débito ou ajuste o limite." "Mensagem: 'Estoque insuficiente' — Não há botijões suficientes do tipo selecionado na unidade; verifique o estoque ou escolha outro tipo." "Mensagem: 'Pedido confirmado com sucesso' — O pedido foi registrado e está disponível para planejamento de entrega."
+
+FAQ e resolução de problemas
+Listar de 3 a 5 perguntas frequentes, por exemplo: (i) "Esqueci minha senha, o que fazer?" — Use o link "Esqueci minha senha" na tela de login e siga o passo a passo com o e-mail cadastrado. (ii) "O botão **Salvar** não fica habilitado" — Verifique se todos os campos obrigatórios (marcados com asterisco) foram preenchidos. (iii) "Não consigo ver dados de outra filial" — O seu perfil pode ter acesso apenas à sua unidade; para visão de todas as filiais, é necessário perfil de Admin Holding. (iv) "A página demora para carregar" — Verifique sua conexão; se persistir, contate o suporte. (v) "Mensagem de 'Sessão expirada'" — Faça login novamente; o sistema encerra a sessão após um tempo sem uso por segurança.
+
+Regras de redação: usar linguagem simples (evitar "backend", "endpoint", "API"); preferir "sistema", "página", "tela". Padronizar o tamanho das imagens e usar bordas finas. Sempre destacar botões em negrito ou entre aspas ao citar no texto (ex.: "Pressione o botão **Confirmar**").
+
+
+
+
+
+
+________________
+
+
+7. REFERÊNCIAS
+
+
+Esta seção é obrigatória e lista todos os materiais consultados. Devem ser organizadas em ordem alfabética pelo sobrenome do autor e com espaçamento simples (com uma linha em branco entre elas).
+
+Formato para livros: SOBRENOME, Nome. Título do livro: subtítulo. Edição. Local: Editora, Ano.
+Formato para documentação online: AUTOR/ORGANIZAÇÃO. Título da página/documentação. Ano. Disponível em: <URL>. Acesso em: dia mês ano.
+Formato para artigos/sites: SOBRENOME, Nome. Título do artigo. Nome do Site, Ano. Disponível em: <URL>. Acesso em: dia mês ano.
+Formato para ferramentas: AUTOR. Nome do software: subtítulo. Versão. Local: Fabricante, Ano. Disponível em: <URL>. Acesso em: dia mês ano.
+
+Referências sugeridas para o projeto GasStation (completar e ordenar alfabeticamente na entrega final):
+
+ANP. Agência Nacional do Petróleo, Gás Natural e Biocombustíveis. Dados e publicações – GLP. Disponível em: <https://www.gov.br/anp/>. Acesso em: 13 mar. 2026.
+
+MARTIN, Robert C. Código limpo: habilidades práticas do software Agile. Rio de Janeiro: Alta Books, 2011.
+
+SPRING. Spring Boot Reference Documentation. 2024. Disponível em: <https://docs.spring.io/spring-boot/docs/current/reference/html/>. Acesso em: 13 mar. 2026.
+
+REACT. React – A JavaScript library for building user interfaces. Disponível em: <https://react.dev>. Acesso em: 13 mar. 2026.
+
+(Incluir aqui as demais referências consultadas – livros, documentação, artigos e ferramentas – em ordem alfabética pelo sobrenome do autor ou nome da organização.)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8. APÊNDICE
+
+
+Inclua nesta seção todos os materiais complementares produzidos por si. É obrigatória a inclusão de todo o código fonte do projeto na linguagem desenvolvida, scripts de criação, manipulação de base de dados, logs para comprovação dos testes, scripts de marcação de texto referente a ferramentas diversas como LaTeX, PlantUML, etc.
+Utilize fonte monospaçada tamanho 10 para blocos de código.
+O Apêndice é o local onde o aluno coloca materiais que ele mesmo produziu, mas que são demasiado extensos ou detalhados para figurar no meio dos capítulos principais, pois poderiam interromper a fluidez da leitura.
+Diferente do Anexo (que é material de terceiros), o Apêndice é autoria do próprio aluno.
+Orientações Gerais
+📘 Guia Rápido de Formatação ABNT (Relatório Técnico)
+Olá, pessoal. Para a entrega do nosso Relatório Técnico, sigam estas diretrizes de formatação baseadas nas normas NBR 14724 e NBR 6023. Um bom desenvolvedor também entrega uma documentação impecável!
+1. Configuração da Página e Texto
+         * Fonte: Arial ou Times New Roman (escolha uma e use no documento todo).
+         * Tamanho: 12 para o texto geral e 10 para citações longas, notas de rodapé, legendas de imagens/tabelas e números de página.
+         * Espaçamento: 1,5 no corpo do texto e Simples para citações longas (> 3 linhas), legendas e referências.
+         * Margens: Superior e Esquerda: 3 cm | Inferior e Direita: 2 cm.
+         * Parágrafos: Recuo de 1,25 cm na primeira linha.
+         * Alinhamento: Justificado (exceto nas Referências, que ficam à esquerda).
+2. Hierarquia de Títulos (Sumário)
+Mantenham o padrão de destaque para facilitar a leitura do seu sumário:
+         1. 1 SEÇÃO PRIMÁRIA (MAIÚSCULAS E NEGRITO)
+         2. 1.1 SEÇÃO SECUNDÁRIA (MAIÚSCULAS SEM NEGRITO)
+         3. 1.1.1 Seção terciária (Minúsculas e Negrito - apenas a 1ª letra maiúscula)
+         4. 1.1.1.1 Seção quaternária (Minúsculas sem negrito)
+3. Elementos Gráficos (Diagramas e Prints)
+Como nosso relatório tem muita modelagem (UML, BPMN, DER), toda imagem deve ter:
+         * Topo: "Figura X – Título da Imagem" (Tamanho 10, Centralizado).
+         * Base: "Fonte: Autoria própria (2026)" ou "Fonte: Adaptado de [Autor] (2026)" (Tamanho 10, Centralizado).
