@@ -1,0 +1,57 @@
+@startuml
+title GasStation - BPMN (Processo de Venda e Entrega)
+skinparam linetype ortho
+
+|Vendas|
+start
+:Receber solicitacao do cliente;
+:Registrar dados do pedido;
+
+|Estoque|
+:Validar disponibilidade\npor unidade e tipo de vasilhame;
+if (Estoque suficiente?) then (Sim)
+  :Reservar/baixar estoque;
+else (Nao)
+  |Vendas|
+  :Informar indisponibilidade;
+  stop
+endif
+
+|Financeiro|
+:Validar limite de credito\n(quando fiado);
+if (Credito aprovado?) then (Sim)
+else (Nao)
+  |Financeiro|
+  :Solicitar override autorizado;
+  if (Override aprovado?) then (Sim)
+  else (Nao)
+    |Vendas|
+    :Cancelar pedido por regra de credito;
+    stop
+  endif
+endif
+
+|Vendas|
+:Confirmar pedido;
+:Publicar evento "PedidoConfirmado";
+
+|Logistica|
+:Planejar rota;
+:Alocar entregador/veiculo;
+:Executar entrega;
+:Confirmar entrega;
+
+|Estoque|
+:Registrar movimentacao final\n(saida/devolucao/comodato);
+
+|Financeiro|
+:Gerar conta a receber e/ou baixa;
+
+|Auditoria|
+:Registrar trilha imutavel\n(pedido, estoque, financeiro, entrega);
+
+|Vendas|
+:Atualizar status final do pedido\n(Entregue);
+stop
+
+@enduml

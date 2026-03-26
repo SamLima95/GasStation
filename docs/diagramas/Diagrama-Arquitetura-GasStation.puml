@@ -1,0 +1,96 @@
+@startuml
+title GasStation - Diagrama de Arquitetura (Macro)
+left to right direction
+skinparam componentStyle rectangle
+skinparam linetype ortho
+
+actor "Admin Holding" as Admin
+actor "Gerente de Filial" as Gerente
+actor "Entregador" as Entregador
+actor "Financeiro" as Financeiro
+
+cloud "Internet / Rede Corporativa" as NET
+
+node "Camada de Apresentacao" {
+  component "Web App\n(React)" as WEB
+}
+
+node "Camada de API" {
+  component "API Gateway / BFF\n(opcional)" as BFF
+}
+
+node "Dominios de Negocio\n(Microsservicos Spring Boot)" {
+  component "Identidade/Auditoria" as AUTH
+  component "Vendas/Pedidos" as VENDAS
+  component "Estoque" as ESTOQUE
+  component "Logistica" as LOG
+  component "Financeiro" as FIN
+  component "RH/Frota" as RH
+}
+
+queue "RabbitMQ\n(eventos assíncronos)" as MQ
+
+database "DB Auth/Auditoria" as DBA
+database "DB Vendas" as DBV
+database "DB Estoque" as DBE
+database "DB Logistica" as DBL
+database "DB Financeiro" as DBF
+database "DB RH/Frota" as DBR
+database "Redis (opcional)\nCache/Sessoes" as REDIS
+
+cloud "SEFAZ / Provedor NF-e" as NFE
+cloud "API Roteirizacao Externa" as ROUTE
+cloud "Servicos/Padroes ANP" as ANP
+
+Admin --> NET
+Gerente --> NET
+Entregador --> NET
+Financeiro --> NET
+
+NET --> WEB : HTTPS
+WEB --> BFF : REST/JSON
+
+BFF --> AUTH : REST
+BFF --> VENDAS : REST
+BFF --> ESTOQUE : REST
+BFF --> LOG : REST
+BFF --> FIN : REST
+BFF --> RH : REST
+
+AUTH --> DBA : JPA
+VENDAS --> DBV : JPA
+ESTOQUE --> DBE : JPA
+LOG --> DBL : JPA
+FIN --> DBF : JPA
+RH --> DBR : JPA
+
+VENDAS --> ESTOQUE : REST (validacao/baixa)
+VENDAS --> FIN : REST (titulos/recebimentos)
+LOG --> VENDAS : REST (status da entrega)
+
+AUTH --> MQ : pub/sub
+VENDAS --> MQ : pub/sub
+ESTOQUE --> MQ : pub/sub
+LOG --> MQ : pub/sub
+FIN --> MQ : pub/sub
+RH --> MQ : pub/sub
+
+AUTH --> REDIS : cache opcional
+VENDAS --> REDIS : cache opcional
+FIN --> REDIS : cache opcional
+
+VENDAS --> NFE : emissao/consulta fiscal
+LOG --> ROUTE : calculo/otimizacao de rota
+ESTOQUE --> ANP : conformidade regulatoria
+AUTH --> ANP : compliance/auditoria (quando aplicavel)
+
+note bottom of MQ
+  Integracoes assincronas principais:
+  - PedidoConfirmado
+  - EstoqueAtualizado
+  - EntregaConfirmada
+  - BaixaFinanceira
+  - EventoAuditoria
+end note
+
+@enduml

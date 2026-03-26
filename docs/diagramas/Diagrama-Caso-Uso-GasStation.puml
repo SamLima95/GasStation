@@ -1,0 +1,59 @@
+@startuml
+title GasStation - Diagrama de Caso de Uso
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Admin Holding" as Admin
+actor "Gerente de Filial" as Gerente
+actor "Entregador" as Entregador
+actor "Financeiro" as Financeiro
+actor "Sistema Externo\n(NF-e / Roteirizacao)" as Externo
+
+rectangle "GasStation" {
+  usecase "Gerenciar usuarios\ne permissoes (RBAC)" as UC1
+  usecase "Gerenciar unidades\n(filiais/depositos)" as UC2
+  usecase "Cadastrar e manter\nclientes" as UC3
+  usecase "Criar/editar/cancelar\npedido" as UC4
+  usecase "Validar estoque\npor unidade" as UC5
+  usecase "Gerenciar comodato" as UC6
+  usecase "Montar rotas\ne acompanhar entregas" as UC7
+  usecase "Confirmar entrega" as UC8
+  usecase "Registrar caixa,\ncontas a receber e baixa" as UC9
+  usecase "Validar limite de credito" as UC10
+  usecase "Consultar dashboard\ne relatorios" as UC11
+  usecase "Consultar trilha\nde auditoria" as UC12
+  usecase "Emitir/consultar\nNF-e/NFC-e" as UC13
+  usecase "Integrar roteirizacao\nexterna" as UC14
+}
+
+Admin --> UC1
+Admin --> UC2
+Admin --> UC11
+Admin --> UC12
+Admin --> UC9
+
+Gerente --> UC3
+Gerente --> UC4
+Gerente --> UC6
+Gerente --> UC7
+Gerente --> UC11
+
+Entregador --> UC8
+Entregador --> UC7
+
+Financeiro --> UC9
+Financeiro --> UC10
+Financeiro --> UC11
+Financeiro --> UC12
+
+Externo --> UC13
+Externo --> UC14
+
+UC4 .> UC5 : <<include>>
+UC4 .> UC10 : <<include>>
+UC4 .> UC13 : <<extend>>
+UC7 .> UC14 : <<extend>>
+UC8 .> UC6 : <<include>>
+UC9 .> UC12 : <<include>>
+
+@enduml

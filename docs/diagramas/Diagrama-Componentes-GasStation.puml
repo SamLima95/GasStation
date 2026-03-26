@@ -1,0 +1,80 @@
+@startuml
+title GasStation - Diagrama de Componentes
+left to right direction
+skinparam componentStyle rectangle
+skinparam linetype ortho
+
+actor "Usuario Web" as User
+
+package "Camada de Apresentacao" {
+  component "Front-end Web\n(React)" as FE
+  component "API Gateway / BFF\n(opcional)" as BFF
+}
+
+package "Microsservicos" {
+  component "Identidade e Auditoria\n(Spring Boot)" as SAuth
+  component "Vendas e Pedidos\n(Spring Boot)" as SVendas
+  component "Estoque\n(Spring Boot)" as SEstoque
+  component "Logistica\n(Spring Boot)" as SLog
+  component "Financeiro\n(Spring Boot)" as SFin
+  component "RH/Frota\n(Spring Boot)" as SRH
+}
+
+package "Mensageria e Cache" {
+  queue "RabbitMQ" as MQ
+  database "Redis\n(cache opcional)" as Redis
+}
+
+package "Persistencia" {
+  database "DB Identidade/Auditoria\n(PostgreSQL/MySQL)" as DBAuth
+  database "DB Vendas/Pedidos\n(PostgreSQL/MySQL)" as DBVendas
+  database "DB Estoque\n(PostgreSQL/MySQL)" as DBEstoque
+  database "DB Logistica\n(PostgreSQL/MySQL)" as DBLog
+  database "DB Financeiro\n(PostgreSQL/MySQL)" as DBFin
+  database "DB RH/Frota\n(PostgreSQL/MySQL)" as DBRH
+}
+
+package "Integracoes Externas" {
+  component "Provedor NF-e/NFC-e\n(SEFAZ/terceiros)" as NFE
+  component "API de Roteirizacao\n(Google Maps/Fleet ou similar)" as Roteirizacao
+  component "Servicos/Padroes ANP" as ANP
+}
+
+User --> FE : usa
+FE --> BFF : HTTPS/JSON
+
+BFF --> SAuth : REST
+BFF --> SVendas : REST
+BFF --> SEstoque : REST
+BFF --> SLog : REST
+BFF --> SFin : REST
+BFF --> SRH : REST
+
+SAuth --> DBAuth : JPA
+SVendas --> DBVendas : JPA
+SEstoque --> DBEstoque : JPA
+SLog --> DBLog : JPA
+SFin --> DBFin : JPA
+SRH --> DBRH : JPA
+
+SAuth --> MQ : publica/consome eventos
+SVendas --> MQ : publica/consome eventos
+SEstoque --> MQ : publica/consome eventos
+SLog --> MQ : publica/consome eventos
+SFin --> MQ : publica/consome eventos
+SRH --> MQ : publica/consome eventos
+
+SVendas --> Redis : cache opcional
+SEstoque --> Redis : cache opcional
+SFin --> Redis : cache opcional
+
+SVendas --> NFE : integracao fiscal
+SLog --> Roteirizacao : otimizacao de rotas
+SAuth --> ANP : conformidade (quando aplicavel)
+SEstoque --> ANP : conformidade (quando aplicavel)
+
+SVendas --> SEstoque : REST (validacao estoque)
+SVendas --> SFin : REST (titulos e pagamentos)
+SLog --> SVendas : REST (status de entrega)
+
+@enduml

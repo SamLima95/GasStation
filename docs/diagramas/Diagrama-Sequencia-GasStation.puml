@@ -1,0 +1,54 @@
+@startuml
+title GasStation - Diagrama de Sequencia (Criacao de Pedido)
+autonumber
+
+actor "Usuario\n(Gerente/Vendas)" as Usuario
+participant "Front-end\n(React)" as Frontend
+participant "API Vendas/Pedidos" as Vendas
+participant "API Estoque" as Estoque
+participant "RabbitMQ" as MQ
+participant "API Financeiro" as Financeiro
+participant "API Auditoria" as Auditoria
+database "DB Vendas" as DBVendas
+
+Usuario -> Frontend: Preenche dados do pedido e confirma
+Frontend -> Vendas: POST /api/v1/pedidos
+activate Vendas
+
+Vendas -> Vendas: Validar payload e regras basicas
+Vendas -> Estoque: GET /api/v1/estoque/disponibilidade\n(unidade, itens)
+Estoque --> Vendas: Disponibilidade OK / Insuficiente
+
+alt Estoque insuficiente
+  Vendas --> Frontend: 409 Estoque insuficiente
+  Frontend --> Usuario: Exibe erro de validacao
+else Estoque disponivel
+  Vendas -> DBVendas: Inserir Pedido + Itens (status=Confirmado)
+  DBVendas --> Vendas: Pedido persistido
+
+  Vendas -> MQ: Publica evento PedidoConfirmado
+  note right of MQ
+    Evento aciona processamentos assincronos:
+    - baixa de estoque
+    - contas a receber
+    - trilha de auditoria
+  end note
+
+  MQ -> Estoque: Evento PedidoConfirmado
+  Estoque -> Estoque: Registrar movimentacao de saida
+  Estoque --> MQ: Ack
+
+  MQ -> Financeiro: Evento PedidoConfirmado
+  Financeiro -> Financeiro: Gerar conta a receber\n(conforme forma de pagamento)
+  Financeiro --> MQ: Ack
+
+  MQ -> Auditoria: Evento PedidoConfirmado
+  Auditoria -> Auditoria: Registrar trilha imutavel
+  Auditoria --> MQ: Ack
+
+  Vendas --> Frontend: 201 Created (pedidoId, status)
+  Frontend --> Usuario: Exibe sucesso e detalhes do pedido
+end
+
+deactivate Vendas
+@enduml

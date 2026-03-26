@@ -331,7 +331,7 @@ O GasStation justifica-se ao substituir esse modelo por uma plataforma corporati
 
 
 Por convenção, os requisitos são referenciados pelo nome da subseção onde estão descritos, seguido do seu identificador, conforme o esquema abaixo:
-* O requisito funcional [Cadastro de Usuários.RF-01] está localizado na subseção “Requisitos Funcionais”, dentro do bloco identificado como [RF-01].
+* O requisito funcional [Gestão de identidade e acesso.RF-01] está localizado na subseção “Requisitos Funcionais”, dentro do bloco identificado como [RF-01].
 * O requisito não funcional [Disponibilidade.NF-04] encontra-se na seção “Requisitos Não Funcionais de Confiabilidade”, no bloco identificado como [NF-04].
 1.6.1 Prioridades dos Requisitos
 Os requisitos do sistema são classificados em três níveis de prioridade:
@@ -361,7 +361,7 @@ O projeto será considerado aprovado quando: (i) Os microsserviços definidos (I
 
 
 1.10 EXCLUSÕES DO ESCOPO 
-* Não haverá, nesta versão, aplicativo mobile nativo (iOS/Android) — a solução é web responsiva; app interno pode ser interface web utilizável em dispositivos móveis. * O sistema não substitui sistemas legados de terceiros (ERP, emissor de NF de outro fornecedor); a integração é feita via API/Webhook. * Não está no escopo customizações enterprise por cliente (módulos sob encomenda). * Integração com gateway de pagamento para cartão de crédito/débito pode ser fase futura; o foco inicial é registro de pagamentos (à vista, fiado, PIX, cartão) e controle de caixa e contas a receber. * Suporte a múltiplos idiomas (i18n) não é obrigatório na primeira entrega.
+* Nesta versão o foco é interface web responsiva, acessível também em dispositivos móveis pelo navegador; aplicativo nativo (iOS/Android) pode ser considerado em versões futuras. * O sistema integra-se a sistemas existentes (ERP, emissores de NF de terceiros) via API/Webhook, preservando o ecossistema atual da distribuidora. * O escopo contempla a solução padrão para distribuidoras de pequeno e médio porte; customizações sob encomenda por cliente podem ser tratadas em fases posteriores. * O foco inicial é o registro de pagamentos (à vista, fiado, PIX, cartão) e o controle de caixa e contas a receber; integração com gateway de pagamento para processamento de cartão pode ser incorporada em fases futuras. * A primeira entrega prioriza o idioma português; suporte a outros idiomas (i18n) pode ser ampliado conforme demanda.
 
 
 1.11 STAKEHOLDERS ENVOLVIDOS 
@@ -400,9 +400,128 @@ ________________
 
 Requisitos funcionais são as funções que usuários e clientes esperam que o software ofereça. Eles estão diretamente ligados às funcionalidades que o sistema deve fornecer. Segundo Ian Sommerville, requisitos funcionais definem as funcionalidades específicas que um sistema de software deve realizar para atender às necessidades dos usuários e alcançar os objetivos do projeto.
 
+Abaixo estão [RF-01] a [RF-20], formulados de modo abrangente (cada item agrega um conjunto de funcionalidades do domínio). O detalhamento granular permanece no documento AnaliseRequisitos.md como referência complementar. Em cada requisito, a linha “Prioridade” repete os três níveis da seção 1.6.1; o nível atribuído está indicado entre asteriscos (*).
 
-* [RF-01] Cadastro de Usuários: O sistema deve permitir o cadastro, edição e exclusão de usuários, com atribuição de perfis (Admin Holding, Gerente de Filial, Entregador, Financeiro etc.) e permissões por módulo e por unidade (RBAC). Atores: Admin Holding, Gerente de Filial. Prioridade: Essencial. Critério de aceitação: O usuário com permissão preenche os campos obrigatórios (nome, e-mail, senha, perfil, unidade quando aplicável) e o sistema registra o usuário e aplica as permissões conforme o perfil; alterações ficam registradas em auditoria.
-* A listagem completa dos requisitos funcionais (RF01 a RF44) está no documento de Análise de Requisitos (AnaliseRequisitos.md), organizada por área: Identidade e Acesso, Auditoria, Estoque e Vasilhames, Vendas e Pedidos, Logística, Financeiro, RH e Frota, Dashboard, Holding e Governança.
+
+[RF-01] Gestão de identidade e acesso:
+O sistema deve permitir cadastro e manutenção de usuários, perfis (RBAC), autenticação segura (ex.: JWT), logout e recuperação de senha, com permissões por módulo e por unidade (filial/depósito).
+		Atores: Admin Holding, Gerente de Filial, demais perfis conforme política.
+Prioridade: *Essencial*	   Importante  	Desejável
+Critério de aceitação: Usuário autorizado cria ou altera cadastros e permissões; login e logout funcionam; escopo por unidade é respeitado nas APIs e na interface.
+
+[RF-02] Auditoria e trilhas de conformidade:
+O sistema deve registrar operações relevantes (quem, quando, o quê, unidade) e manter trilhas imutáveis para áreas críticas como estoque, financeiro e pedidos, com consulta por período e entidade.
+		Atores: Sistema; Admin Holding, Compliance (consulta).
+Prioridade: *Essencial*	   Importante  	Desejável
+Critério de aceitação: Eventos auditáveis ficam persistidos sem exclusão indevida; histórico é recuperável para conferência.
+
+[RF-03] Gestão de unidades e visão holding:
+O sistema deve cadastrar e parametrizar filiais e depósitos, regras por unidade, override central e visão consolidada de estoques, vendas e resultados financeiros em nível holding, respeitando RBAC.
+		Atores: Admin Holding; Gerente de Filial (escopo local).
+Prioridade: *Essencial*	   Importante  	Desejável
+Critério de aceitação: Novas unidades entram na operação; inativação preserva histórico; totais consolidados batem com a soma das unidades autorizadas ao usuário.
+
+[RF-04] Cadastro de clientes:
+O sistema deve manter cadastro de clientes com dados necessários à venda, entrega e cobrança, incluindo limite de crédito e vínculo à unidade de atendimento.
+		Atores: Gerente de Filial, Vendas, Financeiro.
+Prioridade: *Essencial*	   Importante  	Desejável
+Critério de aceitação: Cliente é selecionável em pedidos; dados obrigatórios validados; crédito disponível para regras de fiado.
+
+[RF-05] Estoque de vasilhames:
+O sistema deve controlar tipos de vasilhame (ex.: P13, P45), saldos por unidade, entradas, saídas, retornos, alertas de estoque mínimo e registro de perdas e avarias.
+		Atores: Gerente de Filial, Estoque, Entregador (conferência), Compliance (consulta).
+Prioridade: *Essencial*	   Importante  	Desejável
+Critério de aceitação: Movimentações atualizam saldo de forma consistente; alertas e ajustes ficam rastreáveis.
+
+[RF-06] Pedidos e vendas de GLP:
+O sistema deve permitir criar, alterar e acompanhar pedidos de entrega com estados coerentes (ex.: confirmado, em rota, entregue, cancelado), integrando estoque, logística e financeiro.
+		Atores: Gerente de Filial, Vendas, Sistema.
+Prioridade: *Essencial*	   Importante  	Desejável
+Critério de aceitação: Fluxo de status é respeitado; cancelamentos seguem regra de negócio; histórico do pedido permanece consultável.
+
+[RF-07] Comodato com clientes:
+O sistema deve controlar botijões em comodato por cliente e unidade, alinhado a entregas e devoluções.
+		Atores: Gerente de Filial, Financeiro, Entregador.
+Prioridade: *Essencial*	   Importante  	Desejável
+Critério de aceitação: Saldo de comodato por cliente reflete entregas e retornos registrados no sistema.
+
+[RF-08] Operações financeiras, meios de pagamento e crédito:
+O sistema deve registrar caixa por unidade, contas a receber, baixas e inadimplência, formas de pagamento (à vista, fiado, cartão, PIX e demais parametrizados) vinculadas ao pedido, e validar vendas a prazo contra limite e saldo devedor, com override autorizado e auditável.
+		Atores: Financeiro, Admin Holding, Gerente de Filial, Entregador (registro no local, se previsto).
+Prioridade: *Essencial*	   Importante  	Desejável
+Critério de aceitação: Caixa e títulos fecham com totais coerentes; fiado respeita limite ou fluxo de aprovação; meios de pagamento conferem com baixa ou contas a receber.
+
+[RF-09] Logística, rotas e entregas:
+O sistema deve apoiar montagem de rotas, alocação de entregador, acompanhamento de status de entrega e, quando parametrizado, integração com serviço de roteirização externa.
+		Atores: Gerente de Filial, Entregador, Logística.
+Prioridade: *Essencial*	   Importante  	Desejável
+Critério de aceitação: Pedido em rota aparece na visão do entregador; conclusão de entrega atualiza o pedido e eventos relacionados.
+
+[RF-10] RH e frota:
+O sistema deve cadastrar entregadores e veículos, registrar manutenção quando aplicável e apoiar alocação em rotas.
+		Atores: Gerente de Filial, RH/Frota, Admin Holding.
+Prioridade: Essencial	   *Importante*  	Desejável
+Critério de aceitação: Entregador/veículo inativos não são usados indevidamente em novas rotas; histórico de frota consultável.
+
+[RF-11] Dashboard e indicadores:
+O sistema deve exibir KPIs (ex.: faturamento, giro de estoque, inadimplência, desempenho por entregador) com filtros por período e unidade e, quando viável, atualizar painéis sem recarga completa da página, preservando filtros do usuário.
+		Atores: Admin Holding, Gerente de Filial, Financeiro.
+Prioridade: *Essencial*	   Importante  	Desejável
+Critério de aceitação: Indicadores obedecem aos filtros e são coerentes com totais de relatórios de detalhamento; falhas de rede exibem mensagem clara.
+
+[RF-12] Relatórios e exportação:
+O sistema deve permitir gerar relatórios gerenciais e exportar em formatos definidos (ex.: PDF, CSV, Excel) para os principais extratos.
+		Atores: Admin Holding, Gerente de Filial, Financeiro.
+Prioridade: Essencial	   *Importante*  	Desejável
+Critério de aceitação: Exportação reflete os mesmos filtros da tela e abre corretamente em ferramenta padrão.
+
+[RF-13] Integração com NF-e/NFC-e:
+O sistema deve integrar-se ao fluxo de emissão ou consulta de NF-e/NFC-e conforme provedor, com fila e reprocesso quando aplicável.
+		Atores: Financeiro, Sistema.
+Prioridade: Essencial	   *Importante*  	Desejável
+Critério de aceitação: Status da nota fica visível no processo de venda; falhas são registradas para nova tentativa.
+
+[RF-14] Integrações externas e documentação de APIs:
+O sistema deve permitir troca de dados com sistemas externos via APIs REST e webhooks autenticados, com logs para diagnóstico, e expor documentação versionada (ex.: OpenAPI/Swagger) dos serviços em ambiente de homologação.
+		Atores: Sistema externo, TI, Admin Holding, desenvolvedores.
+Prioridade: Essencial	   *Importante*  	Desejável
+Critério de aceitação: Integrações retornam respostas previsíveis; falhas são rastreáveis; documentação cobre os principais recursos.
+
+[RF-15] Conformidade ANP e governança:
+O sistema deve contemplar campos e processos alinhados às exigências da ANP e registro de perdas/avarias conforme escopo regulatório.
+		Atores: Compliance, Admin Holding.
+Prioridade: Essencial	   *Importante*  	Desejável
+Critério de aceitação: Dados necessários ao compliance podem ser extraídos ou enviados conforme parametrização do MVP.
+
+[RF-16] Políticas comerciais e precificação por unidade:
+O sistema deve permitir parametrizar preços, condições e regras comerciais por unidade, respeitando a hierarquia holding × filial definida no projeto.
+		Atores: Admin Holding, Gerente de Filial (escopo local).
+Prioridade: Essencial	   *Importante*  	Desejável
+Critério de aceitação: Pedidos aplicam preço e condições vigentes da unidade; alterações ficam rastreáveis.
+
+[RF-17] Metas e desempenho operacional:
+O sistema deve permitir definir e acompanhar metas (ex.: entregas, volume, receita atribuída) por equipe ou entregador e período, quando aplicável ao escopo.
+		Atores: Gerente de Filial, Admin Holding.
+Prioridade: Essencial	   Importante  	*Desejável*
+Critério de aceitação: Comparativo realizado × meta é obtido com filtros de período e unidade.
+
+[RF-18] Alertas e notificações operacionais:
+O sistema deve emitir alertas configuráveis (ex.: estoque abaixo do mínimo, limite de crédito, falha em integração) por meio da própria interface e, quando implementado, por e-mail ou canal equivalente.
+		Atores: Sistema; Gerente de Filial, Financeiro, Admin Holding.
+Prioridade: Essencial	   *Importante*  	Desejável
+Critério de aceitação: Eventos configurados geram aviso visível ao responsável; histórico de alertas consultável quando previsto.
+
+[RF-19] Carga e exportação de dados mestres:
+O sistema deve permitir importar ou exportar cadastros de apoio em lote (ex.: clientes, tabelas auxiliares), quando previsto no MVP, com validação e relatório de erros.
+		Atores: Admin Holding, Gerente de Filial.
+Prioridade: Essencial	   Importante  	*Desejável*
+Critério de aceitação: Arquivo válido atualiza cadastros de forma consistente; registros inválidos são identificados sem corromper base.
+
+[RF-20] Logs de acesso e rastreabilidade de autenticação:
+O sistema deve registrar eventos de login, falha de autenticação e logout relevantes para segurança, com consulta por período e usuário.
+		Atores: Sistema; Admin Holding, Compliance.
+Prioridade: Essencial	   *Importante*  	Desejável
+Critério de aceitação: Logs são persistidos e consultáveis; não podem ser apagados por usuário comum.
 
 
 2.2 REQUISITOS NÃO FUNCIONAIS
@@ -411,10 +530,80 @@ Requisitos funcionais são as funções que usuários e clientes esperam que o s
 Os requisitos não funcionais representam atributos de qualidade que um software deve possuir, mesmo que não estejam diretamente ligados às funcionalidades principais. Eles indicam características esperadas em qualquer sistema profissionalmente desenvolvido, como desempenho, segurança, usabilidade e confiabilidade. Além disso, expressam restrições técnicas que o software precisa atender, garantindo que ele funcione de forma eficiente dentro de seu ambiente operacional.
 
 
-* [NF-01] (Desempenho): O tempo de carregamento da página inicial não deve exceder 3 segundos em rede banda larga. Prioridade: Essencial. Critério de medição: Teste com ferramenta de medição (Lighthouse, GTmetrix).
-* [NF-02] (Segurança): Dados sensíveis devem ser criptografados; as APIs devem estar protegidas contra SQL Injection e XSS, com rate limiting e uso de variáveis de ambiente para chaves e senhas. Prioridade: Essencial.
-* [NF-03] (Disponibilidade): Os serviços devem expor health checks e o sistema deve suportar processamento assíncrono (RabbitMQ) para tarefas pesadas, com retry e dead-letter queue. Prioridade: Importante.
-* A listagem completa dos requisitos não funcionais (segurança, performance, escalabilidade, disponibilidade, interoperabilidade) está em AnaliseRequisitos.md (seção 5) e EspecificacaoCorporativa.md (seção 4).
+[NF-01] (Desempenho):
+O tempo de carregamento da página inicial não deve exceder 3 segundos em rede banda larga.
+Prioridade: *Essencial*	   Importante  	Desejável
+Critério de medição: Teste com ferramenta de medição (Lighthouse, GTmetrix).
+
+[NF-02] (Segurança):
+Dados sensíveis devem ser criptografados; as APIs devem estar protegidas contra SQL Injection e XSS, com rate limiting e uso de variáveis de ambiente para chaves e senhas.
+Prioridade: *Essencial*	   Importante  	Desejável
+Critério de medição: Varredura de segurança (OWASP ZAP/Snyk), testes de penetração e validação de criptografia em trânsito e em repouso.
+
+[NF-03] (Disponibilidade):
+Os serviços devem expor health checks e o sistema deve suportar processamento assíncrono (RabbitMQ) para tarefas pesadas, com retry e dead-letter queue.
+Prioridade: Essencial	   *Importante*  	Desejável
+Critério de medição: Monitoramento de uptime, testes de falha controlada e verificação de reprocessamento das filas.
+
+[NF-04] (Escalabilidade):
+O sistema deve suportar crescimento de usuários, filiais e volume de pedidos sem degradação perceptível, permitindo escalonamento horizontal dos serviços.
+Prioridade: Essencial	   *Importante*  	Desejável
+Critério de medição: Teste de carga progressiva com aumento de requisições concorrentes e análise de tempo de resposta.
+
+[NF-05] (Usabilidade):
+As telas principais devem manter navegação intuitiva, consistência visual e fluxo de operação com no máximo 3 cliques para ações frequentes.
+Prioridade: Essencial	   *Importante*  	Desejável
+Critério de medição: Teste de usabilidade com usuários-alvo e taxa de sucesso nas tarefas acima de 90%.
+
+[NF-06] (Confiabilidade):
+As operações críticas (pedido, pagamento, baixa de estoque) devem garantir integridade transacional e recuperação segura em caso de falha.
+Prioridade: *Essencial*	   Importante  	Desejável
+Critério de medição: Testes de interrupção durante transações e validação de consistência dos dados após recuperação.
+
+[NF-07] (Manutenibilidade):
+O código deve seguir padrões de arquitetura, nomenclatura e modularização para facilitar manutenção evolutiva e corretiva.
+Prioridade: Essencial	   *Importante*  	Desejável
+Critério de medição: Revisão de código, análise estática (SonarQube) e redução de débito técnico.
+
+[NF-08] (Testabilidade):
+Os serviços devem possuir cobertura mínima de testes automatizados para regras críticas de negócio e integrações principais.
+Prioridade: *Essencial*	   Importante  	Desejável
+Critério de medição: Relatório de cobertura (ex.: JaCoCo) com mínimo de 70% nas camadas de serviço/domínio.
+
+[NF-09] (Observabilidade):
+O sistema deve registrar logs estruturados, métricas e rastreamento distribuído para facilitar diagnóstico de incidentes.
+Prioridade: Essencial	   *Importante*  	Desejável
+Critério de medição: Verificação de logs por correlação, dashboards de métricas e rastros completos por requisição.
+
+[NF-10] (Interoperabilidade):
+As integrações externas devem seguir padrões REST/JSON com contratos versionados e documentação atualizada.
+Prioridade: Essencial	   *Importante*  	Desejável
+Critério de medição: Testes de contrato (consumer/provider) e validação em ambiente de homologação.
+
+[NF-11] (Compatibilidade):
+O front-end deve funcionar nas versões atuais dos navegadores Chrome, Edge e Firefox sem perda de funcionalidades essenciais.
+Prioridade: Essencial	   *Importante*  	Desejável
+Critério de medição: Testes cross-browser com checklist funcional das telas críticas.
+
+[NF-12] (Portabilidade):
+O ambiente deve ser executável por meio de containers Docker, com configuração reproduzível em desenvolvimento, homologação e produção.
+Prioridade: Essencial	   *Importante*  	Desejável
+Critério de medição: Subida completa via Docker Compose e execução dos serviços sem ajustes manuais adicionais.
+
+[NF-13] (Backup e Recuperação):
+O sistema deve possuir rotina automática de backup e procedimento validado de restauração para minimizar perda de dados.
+Prioridade: *Essencial*	   Importante  	Desejável
+Critério de medição: Teste periódico de restore com validação de integridade dos dados restaurados.
+
+[NF-14] (Auditoria e Rastreabilidade):
+Eventos críticos de autenticação, alteração de cadastro, estoque e financeiro devem gerar trilha de auditoria imutável.
+Prioridade: *Essencial*	   Importante  	Desejável
+Critério de medição: Consulta de trilhas por usuário/período e validação de impossibilidade de alteração por perfil comum.
+
+[NF-15] (Acessibilidade):
+As interfaces devem atender diretrizes básicas de acessibilidade (contraste, foco visível, navegação por teclado e textos alternativos).
+Prioridade: Essencial	   Importante  	*Desejável*
+Critério de medição: Auditoria com Lighthouse/WAVE e testes manuais de navegação por teclado.
 
 
 2.3 REGRAS DE NEGÓCIO
@@ -423,10 +612,65 @@ Os requisitos não funcionais representam atributos de qualidade que um software
 As regras de negócio definem os limites, comportamentos e restrições que regem o funcionamento da aplicação, garantindo conformidade com os objetivos organizacionais e legais. Abaixo estão listadas as principais regras aplicáveis ao sistema:
 
 
-* [RN-01] Permissões por unidade: Toda operação de negócio (pedido, estoque, financeiro, rota) está associada a uma unidade (filial/depósito). O acesso a dados e funções pode ser restrito por unidade (ex.: gerente vê apenas sua filial). Apenas usuários com perfil Admin Holding podem ter visão e permissão sobre todas as unidades. Prioridade: Essencial.
-* [RN-02] Limite de crédito e fiado: O valor a prazo (fiado) não pode exceder o limite de crédito do cliente menos o saldo devedor atual; caso exceda, a venda não é autorizada até regularização ou alteração de limite (override excepcional por perfil autorizado, com registro em auditoria). Prioridade: Essencial.
-* [RN-03] Trilhas de auditoria: Toda movimentação relevante de estoque, financeiro ou pedido gera registro de auditoria imutável (quem, quando, o quê, unidade); registros não podem ser alterados ou apagados. Prioridade: Essencial.
-* A listagem completa das regras de negócio (RN01 a RN34) está no documento RegrasNegocio.md, organizada por área (Estoque, Vendas, Comodato, Financeiro, Logística, RH/Frota, Holding, Compliance).
+[RN-01] Permissões por unidade:
+Toda operação de negócio (pedido, estoque, financeiro e rota) deve estar associada a uma unidade (filial/depósito), e o usuário só pode visualizar/operar dados das unidades autorizadas.
+Prioridade: *Essencial*	   Importante  	Desejável
+
+[RN-02] Visão corporativa da holding:
+Apenas usuários com perfil Admin Holding podem visualizar dados consolidados de todas as unidades e aplicar configurações globais.
+Prioridade: *Essencial*	   Importante  	Desejável
+
+[RN-03] Limite de crédito do cliente:
+Vendas a prazo (fiado) não podem exceder o limite de crédito disponível do cliente (limite total menos saldo devedor em aberto).
+Prioridade: *Essencial*	   Importante  	Desejável
+
+[RN-04] Override de crédito com auditoria:
+Liberação de venda acima do limite só pode ocorrer por perfil autorizado e deve registrar justificativa obrigatória na trilha de auditoria.
+Prioridade: *Essencial*	   Importante  	Desejável
+
+[RN-05] Integridade da movimentação de estoque:
+Toda saída ou entrada de botijões deve gerar movimentação de estoque com usuário, data/hora, unidade e origem da operação.
+Prioridade: *Essencial*	   Importante  	Desejável
+
+[RN-06] Bloqueio de estoque negativo:
+O sistema não deve permitir confirmação de pedido que gere saldo negativo para o item na unidade de origem.
+Prioridade: *Essencial*	   Importante  	Desejável
+
+[RN-07] Comodato vinculado ao cliente:
+Retirada e devolução de vasilhames em comodato devem estar vinculadas a cliente e unidade, mantendo saldo atualizado por tipo de botijão.
+Prioridade: *Essencial*	   Importante  	Desejável
+
+[RN-08] Transição válida de status do pedido:
+O pedido deve seguir fluxo de status definido (Rascunho -> Confirmado -> Em Rota -> Entregue ou Cancelado), sem saltos inválidos.
+Prioridade: *Essencial*	   Importante  	Desejável
+
+[RN-09] Cancelamento com rastreabilidade:
+Pedidos cancelados devem registrar motivo, usuário responsável e horário do cancelamento; pedidos entregues não podem ser cancelados.
+Prioridade: *Essencial*	   Importante  	Desejável
+
+[RN-10] Fechamento de caixa:
+Após fechamento do caixa no período, novos lançamentos financeiros no mesmo caixa/período devem ser bloqueados, exceto por perfil autorizado.
+Prioridade: *Essencial*	   Importante  	Desejável
+
+[RN-11] Baixa financeira por título:
+Recebimentos devem ser vinculados ao título/conta a receber correspondente, permitindo baixa parcial e atualização automática do saldo em aberto.
+Prioridade: *Essencial*	   Importante  	Desejável
+
+[RN-12] Alocação de entregas:
+Uma entrega só pode ser atribuída a entregador ativo e veículo disponível, respeitando restrições operacionais da unidade.
+Prioridade: Essencial	   *Importante*  	Desejável
+
+[RN-13] Trilha de auditoria imutável:
+Eventos críticos (autenticação, pedidos, estoque, financeiro e permissões) devem gerar registro de auditoria que não pode ser alterado ou removido por usuário comum.
+Prioridade: *Essencial*	   Importante  	Desejável
+
+[RN-14] Política comercial por unidade:
+Preço e condição comercial aplicados no pedido devem seguir a política vigente da unidade, respeitando hierarquia holding x filial.
+Prioridade: *Essencial*	   Importante  	Desejável
+
+[RN-15] Conformidade regulatória:
+Campos e processos obrigatórios para conformidade ANP e emissão fiscal devem ser validados antes da conclusão das operações aplicáveis.
+Prioridade: *Essencial*	   Importante  	Desejável
 ________________
 3 DOCUMENTO DE ESPECIFICAÇÃO DE MODELAGEM (DEM)
 
@@ -434,33 +678,33 @@ ________________
 
 
 3.1.1 Entidade-Relacionamento
-O modelo ER do GasStation contempla as entidades principais: Usuario, Perfil/Papel, Unidade (Filial/Depósito), Cliente, Pedido, ItemPedido, Vasilhame (tipo P13/P45), MovimentacaoEstoque, Comodato (cliente x vasilhame por unidade), Rota, Entrega, Entregador, Veiculo, Caixa, ContaAReceber, Auditoria e ConfiguracaoUnidade. Relacionamentos: Usuario N:1 Perfil e N:N Unidade (permissões por unidade); Pedido N:1 Cliente e N:1 Unidade; ItemPedido N:1 Pedido e N:1 Vasilhame; MovimentacaoEstoque N:1 Unidade e N:1 Vasilhame; Comodato N:1 Cliente, N:1 Unidade e N:1 Vasilhame; Rota N:1 Unidade e N:1 Entregador; Entrega N:1 Rota e N:1 Pedido; Auditoria registra entidade, id, usuário, data/hora e alteração. O diagrama ER completo deve ser elaborado e inserido como figura (Fonte: autoria própria).
+O modelo ER do GasStation contempla as entidades principais: Usuario, Perfil/Papel, Unidade (Filial/Depósito), Cliente, Pedido, ItemPedido, Vasilhame (tipo P13/P45), MovimentacaoEstoque, Comodato (cliente x vasilhame por unidade), Rota, Entrega, Entregador, Veiculo, Caixa, ContaAReceber, Auditoria e ConfiguracaoUnidade. Relacionamentos: Usuario N:1 Perfil e N:N Unidade (permissões por unidade); Pedido N:1 Cliente e N:1 Unidade; ItemPedido N:1 Pedido e N:1 Vasilhame; MovimentacaoEstoque N:1 Unidade e N:1 Vasilhame; Comodato N:1 Cliente, N:1 Unidade e N:1 Vasilhame; Rota N:1 Unidade e N:1 Entregador; Entrega N:1 Rota e N:1 Pedido; Auditoria registra entidade, id, usuário, data/hora e alteração. Diagrama inicial disponivel em docs/diagramas/DER-GasStation.puml (Fonte: autoria propria).
 
 3.1.2 Dicionário de Dados 
-O dicionário de dados descreve, para cada entidade e atributo: nome, tipo (string, inteiro, decimal, data, booleano, etc.), tamanho, obrigatoriedade, chave (PK/FK) e regras (ex.: CPF único, estoque mínimo >= 0). Exemplos: Usuario (id, nome, email, senhaHash, perfilId, ativo, criadoEm); Pedido (id, clienteId, unidadeId, status, valorTotal, dataPedido, dataEntregaPrevista); Vasilhame (id, tipo, descricao, capacidade); MovimentacaoEstoque (id, unidadeId, vasilhameId, tipoMovimentacao, quantidade, data, usuarioId, pedidoId opcional). O dicionário completo deve ser elaborado a partir do modelo ER e inserido em tabela no documento ou no apêndice.
+O dicionário de dados descreve, para cada entidade e atributo: nome, tipo (string, inteiro, decimal, data, booleano, etc.), tamanho, obrigatoriedade, chave (PK/FK) e regras (ex.: CPF único, estoque mínimo >= 0). Exemplos: Usuario (id, nome, email, senhaHash, perfilId, ativo, criadoEm); Pedido (id, clienteId, unidadeId, status, valorTotal, dataPedido, dataEntregaPrevista); Vasilhame (id, tipo, descricao, capacidade); MovimentacaoEstoque (id, unidadeId, vasilhameId, tipoMovimentacao, quantidade, data, usuarioId, pedidoId opcional). Diagrama inicial do dicionario disponivel em docs/diagramas/Dicionario-Dados-GasStation.puml. O dicionário completo deve ser elaborado a partir do modelo ER e inserido em tabela no documento ou no apêndice.
 
 3.2 MODELAGEM COMPORTAMENTAL 
 3.2.1 Diagrama de Sequência        
-Os diagramas de sequência descrevem a interação entre atores e componentes do sistema ao longo do tempo. Exemplos para o GasStation: (i) Fluxo de login: Usuário → Front-end → API Identidade → validação → JWT; (ii) Criação de pedido: Usuário → API Vendas → validação estoque (API Estoque) → registro pedido → publicação evento RabbitMQ (atualização estoque/auditoria); (iii) Confirmação de entrega: Entregador → API Logística → confirmação → eventos para Estoque, Comodato, Financeiro e Auditoria. Cada fluxo crítico deve ser documentado em diagrama de sequência (PlantUML ou similar) e inserido como figura.
+Os diagramas de sequência descrevem a interação entre atores e componentes do sistema ao longo do tempo. Exemplos para o GasStation: (i) Fluxo de login: Usuário → Front-end → API Identidade → validação → JWT; (ii) Criação de pedido: Usuário → API Vendas → validação estoque (API Estoque) → registro pedido → publicação evento RabbitMQ (atualização estoque/auditoria); (iii) Confirmação de entrega: Entregador → API Logística → confirmação → eventos para Estoque, Comodato, Financeiro e Auditoria. Diagrama inicial disponivel em docs/diagramas/Diagrama-Sequencia-GasStation.puml. Cada fluxo crítico deve ser documentado em diagrama de sequência (PlantUML ou similar) e inserido como figura.
 
 3.2.2 Diagrama de Estados
-O diagrama de estados representa os estados possíveis de entidades e as transições. Exemplos: (i) Pedido: Rascunho → Confirmado → EmRota → Entregue / Cancelado; (ii) ContaAReceber: Aberta → ParcialmentePaga → Quitada / Inadimplente; (iii) MovimentacaoEstoque: Registrada → Conciliada (quando aplicável). Os diagramas devem ser elaborados (PlantUML ou similar) e inseridos como figuras (Fonte: autoria própria).
+O diagrama de estados representa os estados possíveis de entidades e as transições. Exemplos: (i) Pedido: Rascunho → Confirmado → EmRota → Entregue / Cancelado; (ii) ContaAReceber: Aberta → ParcialmentePaga → Quitada / Inadimplente; (iii) MovimentacaoEstoque: Registrada → Conciliada (quando aplicável). Diagrama inicial disponivel em docs/diagramas/Diagrama-Estados-GasStation.puml. Os diagramas devem ser elaborados (PlantUML ou similar) e inseridos como figuras (Fonte: autoria própria).
 
 3.3 MODELAGEM ESTRUTURAL
 3.3.1 Diagrama de Caso de Uso        
-Os atores são: Admin Holding, Gerente de Filial, Entregador, Financeiro, Sistema (integrações). Casos de uso principais: Gerenciar usuários e permissões; Gerenciar unidades/filiais; Cadastrar cliente; Criar/editar/cancelar pedido; Registrar movimentação de estoque; Consultar comodato; Gerenciar rotas e entregas; Registrar pagamento e contas a receber; Consultar dashboard e relatórios; Emitir NF (integração); Consultar auditoria. O diagrama de caso de uso deve ser elaborado com inclusão e extensão quando aplicável e inserido como figura.
+Os atores são: Admin Holding, Gerente de Filial, Entregador, Financeiro, Sistema (integrações). Casos de uso principais: Gerenciar usuários e permissões; Gerenciar unidades/filiais; Cadastrar cliente; Criar/editar/cancelar pedido; Registrar movimentação de estoque; Consultar comodato; Gerenciar rotas e entregas; Registrar pagamento e contas a receber; Consultar dashboard e relatórios; Emitir NF (integração); Consultar auditoria. Diagrama inicial disponivel em docs/diagramas/Diagrama-Caso-Uso-GasStation.puml. O diagrama de caso de uso deve ser elaborado com inclusão e extensão quando aplicável e inserido como figura.
 
 3.3.2 Diagrama de Componentes
-Os componentes do sistema incluem: Front-end (React), API Gateway ou BFF (opcional), microsserviços (Identidade/Auditoria, Vendas/Pedidos, Estoque, Logística, Financeiro, RH/Frota), mensageria (RabbitMQ), bancos de dados (PostgreSQL/MySQL por serviço ou schema, Redis para cache). O diagrama de componentes deve mostrar as dependências entre esses blocos e ser inserido como figura.
+Os componentes do sistema incluem: Front-end (React), API Gateway ou BFF (opcional), microsserviços (Identidade/Auditoria, Vendas/Pedidos, Estoque, Logística, Financeiro, RH/Frota), mensageria (RabbitMQ), bancos de dados (PostgreSQL/MySQL por serviço ou schema, Redis para cache). Diagrama inicial disponivel em docs/diagramas/Diagrama-Componentes-GasStation.puml. O diagrama de componentes deve mostrar as dependências entre esses blocos e ser inserido como figura.
 
 3.3.3 Diagrama de Arquitetura        
-O diagrama de arquitetura descreve a macroestrutura: usuários acessam o front-end (web); o front-end consome as APIs REST dos microsserviços; os microsserviços comunicam-se entre si via API REST (síncrono) e RabbitMQ (assíncrono); cada serviço possui seu banco de dados (ou schema isolado). Incluir também integrações externas (NF-e, roteirização, ANP). O diagrama deve ser elaborado (ex.: C4, ou blocos com legenda) e inserido como figura; a descrição textual está na seção 5.1 deste documento.
+O diagrama de arquitetura descreve a macroestrutura: usuários acessam o front-end (web); o front-end consome as APIs REST dos microsserviços; os microsserviços comunicam-se entre si via API REST (síncrono) e RabbitMQ (assíncrono); cada serviço possui seu banco de dados (ou schema isolado). Incluir também integrações externas (NF-e, roteirização, ANP). Diagrama inicial disponivel em docs/diagramas/Diagrama-Arquitetura-GasStation.puml. O diagrama deve ser elaborado (ex.: C4, ou blocos com legenda) e inserido como figura; a descrição textual está na seção 5.1 deste documento.
 
 3.4 MAPEAMENTO OBJETO-RELACIONAL (ORM)
-O mapeamento ORM descreve como as entidades do domínio são persistidas no banco relacional. No back-end Java/Spring Boot, utiliza-se JPA/Hibernate: entidades anotadas com @Entity, @Table, @Column; relacionamentos com @OneToMany, @ManyToOne, @ManyToMany; auditoria com @CreatedDate, @LastModifiedDate ou tabela de auditoria dedicada. Scripts de criação de tabelas (DDL) devem ser versionados e incluídos no apêndice. O documento pode conter um resumo das entidades e suas tabelas correspondentes.
+O mapeamento ORM descreve como as entidades do domínio são persistidas no banco relacional. No back-end Java/Spring Boot, utiliza-se JPA/Hibernate: entidades anotadas com @Entity, @Table, @Column; relacionamentos com @OneToMany, @ManyToOne, @ManyToMany; auditoria com @CreatedDate, @LastModifiedDate ou tabela de auditoria dedicada. Diagrama inicial disponivel em docs/diagramas/Mapeamento-ORM-GasStation.puml. Scripts de criação de tabelas (DDL) devem ser versionados e incluídos no apêndice. O documento pode conter um resumo das entidades e suas tabelas correspondentes.
 
 3.5 BPMN (BUSINESS PROCESS MODEL AND NOTATION)
-Os processos de negócio podem ser modelados em BPMN para fluxos como: Processo de venda (pedido → validação estoque e crédito → confirmação → entrega → baixa estoque e comodato → registro financeiro e auditoria); Processo de movimentação de estoque (solicitação → aprovação se necessário → registro → atualização saldo e auditoria); Processo de roteirização e entrega (definição de rota → alocação entregador → execução → confirmação e eventos). Os diagramas BPMN devem ser elaborados (ex.: Camunda Modeler, bpmn.io) e inseridos como figuras quando aplicável.
+Os processos de negócio podem ser modelados em BPMN para fluxos como: Processo de venda (pedido → validação estoque e crédito → confirmação → entrega → baixa estoque e comodato → registro financeiro e auditoria); Processo de movimentação de estoque (solicitação → aprovação se necessário → registro → atualização saldo e auditoria); Processo de roteirização e entrega (definição de rota → alocação entregador → execução → confirmação e eventos). Diagrama inicial disponivel em docs/diagramas/BPMN-Processo-Venda-GasStation.puml. Os diagramas BPMN devem ser elaborados (ex.: Camunda Modeler, bpmn.io) e inseridos como figuras quando aplicável.
 
 
 ________________

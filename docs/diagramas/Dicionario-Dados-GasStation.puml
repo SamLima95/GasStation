@@ -1,0 +1,203 @@
+@startuml
+title GasStation - Dicionario de Dados (visao inicial)
+hide methods
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+legend right
+  <b>Convencoes</b>
+  PK = Chave primaria
+  FK = Chave estrangeira
+  NN = Not Null
+  UQ = Unico
+endlegend
+
+class PERFIL <<Tabela>> {
+  id: uuid [PK, NN]
+  nome: varchar(100) [NN, UQ]
+  descricao: varchar(255)
+}
+
+class USUARIO <<Tabela>> {
+  id: uuid [PK, NN]
+  nome: varchar(150) [NN]
+  email: varchar(150) [NN, UQ]
+  senha_hash: varchar(255) [NN]
+  ativo: boolean [NN]
+  criado_em: timestamp [NN]
+  perfil_id: uuid [FK, NN]
+}
+
+class UNIDADE <<Tabela>> {
+  id: uuid [PK, NN]
+  nome: varchar(120) [NN]
+  tipo: varchar(30) [NN]
+  ativa: boolean [NN]
+}
+
+class USUARIO_UNIDADE <<Tabela>> {
+  usuario_id: uuid [PK, FK, NN]
+  unidade_id: uuid [PK, FK, NN]
+  nivel_acesso: varchar(30) [NN]
+}
+
+class CLIENTE <<Tabela>> {
+  id: uuid [PK, NN]
+  nome: varchar(150) [NN]
+  documento: varchar(20) [NN, UQ]
+  limite_credito: decimal(12,2) [NN]
+  saldo_devedor: decimal(12,2) [NN]
+  unidade_id: uuid [FK, NN]
+}
+
+class PEDIDO <<Tabela>> {
+  id: uuid [PK, NN]
+  cliente_id: uuid [FK, NN]
+  unidade_id: uuid [FK, NN]
+  status: varchar(30) [NN]
+  valor_total: decimal(12,2) [NN]
+  data_pedido: timestamp [NN]
+  data_entrega_prevista: timestamp
+}
+
+class ITEM_PEDIDO <<Tabela>> {
+  id: uuid [PK, NN]
+  pedido_id: uuid [FK, NN]
+  vasilhame_id: uuid [FK, NN]
+  quantidade: int [NN]
+  preco_unitario: decimal(12,2) [NN]
+}
+
+class VASILHAME <<Tabela>> {
+  id: uuid [PK, NN]
+  tipo: varchar(20) [NN]
+  descricao: varchar(120)
+  capacidade: decimal(8,2) [NN]
+}
+
+class MOVIMENTACAO_ESTOQUE <<Tabela>> {
+  id: uuid [PK, NN]
+  unidade_id: uuid [FK, NN]
+  vasilhame_id: uuid [FK, NN]
+  usuario_id: uuid [FK, NN]
+  pedido_id: uuid [FK]
+  tipo_movimentacao: varchar(30) [NN]
+  quantidade: int [NN]
+  data_hora: timestamp [NN]
+}
+
+class COMODATO <<Tabela>> {
+  id: uuid [PK, NN]
+  cliente_id: uuid [FK, NN]
+  unidade_id: uuid [FK, NN]
+  vasilhame_id: uuid [FK, NN]
+  saldo_comodato: int [NN]
+  atualizado_em: timestamp [NN]
+}
+
+class ENTREGADOR <<Tabela>> {
+  id: uuid [PK, NN]
+  nome: varchar(150) [NN]
+  documento: varchar(20) [NN, UQ]
+  ativo: boolean [NN]
+  unidade_id: uuid [FK, NN]
+}
+
+class VEICULO <<Tabela>> {
+  id: uuid [PK, NN]
+  placa: varchar(10) [NN, UQ]
+  modelo: varchar(80) [NN]
+  ativo: boolean [NN]
+  unidade_id: uuid [FK, NN]
+}
+
+class ROTA <<Tabela>> {
+  id: uuid [PK, NN]
+  unidade_id: uuid [FK, NN]
+  entregador_id: uuid [FK, NN]
+  data_rota: timestamp [NN]
+  status: varchar(30) [NN]
+}
+
+class ENTREGA <<Tabela>> {
+  id: uuid [PK, NN]
+  rota_id: uuid [FK, NN]
+  pedido_id: uuid [FK, NN]
+  status: varchar(30) [NN]
+  data_confirmacao: timestamp
+}
+
+class CAIXA <<Tabela>> {
+  id: uuid [PK, NN]
+  unidade_id: uuid [FK, NN]
+  data_abertura: date [NN]
+  data_fechamento: date
+  status: varchar(20) [NN]
+}
+
+class CONTA_A_RECEBER <<Tabela>> {
+  id: uuid [PK, NN]
+  pedido_id: uuid [FK, NN]
+  cliente_id: uuid [FK, NN]
+  caixa_id: uuid [FK, NN]
+  valor_original: decimal(12,2) [NN]
+  valor_aberto: decimal(12,2) [NN]
+  status: varchar(30) [NN]
+  vencimento: date [NN]
+}
+
+class AUDITORIA <<Tabela>> {
+  id: uuid [PK, NN]
+  entidade: varchar(80) [NN]
+  entidade_id: uuid [NN]
+  usuario_id: uuid [FK, NN]
+  unidade_id: uuid [FK, NN]
+  data_hora: timestamp [NN]
+  acao: varchar(50) [NN]
+  alteracao: text [NN]
+}
+
+class CONFIGURACAO_UNIDADE <<Tabela>> {
+  id: uuid [PK, NN]
+  unidade_id: uuid [FK, NN]
+  chave: varchar(80) [NN]
+  valor: varchar(255) [NN]
+  atualizado_em: timestamp [NN]
+}
+
+PERFIL "1" -- "N" USUARIO
+USUARIO "1" -- "N" USUARIO_UNIDADE
+UNIDADE "1" -- "N" USUARIO_UNIDADE
+
+UNIDADE "1" -- "N" CLIENTE
+CLIENTE "1" -- "N" PEDIDO
+UNIDADE "1" -- "N" PEDIDO
+PEDIDO "1" -- "N" ITEM_PEDIDO
+VASILHAME "1" -- "N" ITEM_PEDIDO
+
+UNIDADE "1" -- "N" MOVIMENTACAO_ESTOQUE
+VASILHAME "1" -- "N" MOVIMENTACAO_ESTOQUE
+USUARIO "1" -- "N" MOVIMENTACAO_ESTOQUE
+PEDIDO "0..1" -- "N" MOVIMENTACAO_ESTOQUE
+
+CLIENTE "1" -- "N" COMODATO
+UNIDADE "1" -- "N" COMODATO
+VASILHAME "1" -- "N" COMODATO
+
+UNIDADE "1" -- "N" ENTREGADOR
+UNIDADE "1" -- "N" VEICULO
+UNIDADE "1" -- "N" ROTA
+ENTREGADOR "1" -- "N" ROTA
+ROTA "1" -- "N" ENTREGA
+PEDIDO "1" -- "N" ENTREGA
+
+UNIDADE "1" -- "N" CAIXA
+PEDIDO "1" -- "N" CONTA_A_RECEBER
+CLIENTE "1" -- "N" CONTA_A_RECEBER
+CAIXA "1" -- "N" CONTA_A_RECEBER
+
+USUARIO "1" -- "N" AUDITORIA
+UNIDADE "1" -- "N" AUDITORIA
+UNIDADE "1" -- "N" CONFIGURACAO_UNIDADE
+
+@enduml

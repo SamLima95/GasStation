@@ -1,0 +1,206 @@
+@startuml
+title GasStation - Mapeamento Objeto-Relacional (ORM)
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "Camada de Dominio (JPA Entities)" {
+  class Usuario <<@Entity>> {
+    +id: UUID <<@Id>>
+    +nome: String
+    +email: String
+    +senhaHash: String
+    +ativo: Boolean
+    +criadoEm: LocalDateTime <<@CreatedDate>>
+  }
+
+  class Perfil <<@Entity>> {
+    +id: UUID <<@Id>>
+    +nome: String
+    +descricao: String
+  }
+
+  class Unidade <<@Entity>> {
+    +id: UUID <<@Id>>
+    +nome: String
+    +tipo: String
+    +ativa: Boolean
+  }
+
+  class Cliente <<@Entity>> {
+    +id: UUID <<@Id>>
+    +nome: String
+    +documento: String
+    +limiteCredito: BigDecimal
+    +saldoDevedor: BigDecimal
+  }
+
+  class Pedido <<@Entity>> {
+    +id: UUID <<@Id>>
+    +status: String
+    +valorTotal: BigDecimal
+    +dataPedido: LocalDateTime
+    +dataEntregaPrevista: LocalDateTime
+  }
+
+  class ItemPedido <<@Entity>> {
+    +id: UUID <<@Id>>
+    +quantidade: Integer
+    +precoUnitario: BigDecimal
+  }
+
+  class Vasilhame <<@Entity>> {
+    +id: UUID <<@Id>>
+    +tipo: String
+    +descricao: String
+    +capacidade: BigDecimal
+  }
+
+  class MovimentacaoEstoque <<@Entity>> {
+    +id: UUID <<@Id>>
+    +tipoMovimentacao: String
+    +quantidade: Integer
+    +dataHora: LocalDateTime
+  }
+
+  class Comodato <<@Entity>> {
+    +id: UUID <<@Id>>
+    +saldoComodato: Integer
+    +atualizadoEm: LocalDateTime
+  }
+
+  class Rota <<@Entity>> {
+    +id: UUID <<@Id>>
+    +dataRota: LocalDateTime
+    +status: String
+  }
+
+  class Entrega <<@Entity>> {
+    +id: UUID <<@Id>>
+    +status: String
+    +dataConfirmacao: LocalDateTime
+  }
+
+  class Entregador <<@Entity>> {
+    +id: UUID <<@Id>>
+    +nome: String
+    +documento: String
+    +ativo: Boolean
+  }
+
+  class Veiculo <<@Entity>> {
+    +id: UUID <<@Id>>
+    +placa: String
+    +modelo: String
+    +ativo: Boolean
+  }
+
+  class Caixa <<@Entity>> {
+    +id: UUID <<@Id>>
+    +dataAbertura: LocalDate
+    +dataFechamento: LocalDate
+    +status: String
+  }
+
+  class ContaAReceber <<@Entity>> {
+    +id: UUID <<@Id>>
+    +valorOriginal: BigDecimal
+    +valorAberto: BigDecimal
+    +status: String
+    +vencimento: LocalDate
+  }
+
+  class Auditoria <<@Entity>> {
+    +id: UUID <<@Id>>
+    +entidade: String
+    +entidadeId: UUID
+    +dataHora: LocalDateTime
+    +acao: String
+    +alteracao: String
+  }
+
+  class ConfiguracaoUnidade <<@Entity>> {
+    +id: UUID <<@Id>>
+    +chave: String
+    +valor: String
+    +atualizadoEm: LocalDateTime
+  }
+}
+
+package "Persistencia (Tabelas)" {
+  class TB_USUARIO <<@Table(usuarios)>>
+  class TB_PERFIL <<@Table(perfis)>>
+  class TB_UNIDADE <<@Table(unidades)>>
+  class TB_CLIENTE <<@Table(clientes)>>
+  class TB_PEDIDO <<@Table(pedidos)>>
+  class TB_ITEM_PEDIDO <<@Table(itens_pedido)>>
+  class TB_VASILHAME <<@Table(vasilhames)>>
+  class TB_MOV_ESTOQUE <<@Table(movimentacoes_estoque)>>
+  class TB_COMODATO <<@Table(comodatos)>>
+  class TB_ROTA <<@Table(rotas)>>
+  class TB_ENTREGA <<@Table(entregas)>>
+  class TB_ENTREGADOR <<@Table(entregadores)>>
+  class TB_VEICULO <<@Table(veiculos)>>
+  class TB_CAIXA <<@Table(caixas)>>
+  class TB_CONTA_RECEBER <<@Table(contas_receber)>>
+  class TB_AUDITORIA <<@Table(auditorias)>>
+  class TB_CONFIG_UNIDADE <<@Table(configuracoes_unidade)>>
+}
+
+Usuario --> TB_USUARIO : @Entity/@Table
+Perfil --> TB_PERFIL : @Entity/@Table
+Unidade --> TB_UNIDADE : @Entity/@Table
+Cliente --> TB_CLIENTE : @Entity/@Table
+Pedido --> TB_PEDIDO : @Entity/@Table
+ItemPedido --> TB_ITEM_PEDIDO : @Entity/@Table
+Vasilhame --> TB_VASILHAME : @Entity/@Table
+MovimentacaoEstoque --> TB_MOV_ESTOQUE : @Entity/@Table
+Comodato --> TB_COMODATO : @Entity/@Table
+Rota --> TB_ROTA : @Entity/@Table
+Entrega --> TB_ENTREGA : @Entity/@Table
+Entregador --> TB_ENTREGADOR : @Entity/@Table
+Veiculo --> TB_VEICULO : @Entity/@Table
+Caixa --> TB_CAIXA : @Entity/@Table
+ContaAReceber --> TB_CONTA_RECEBER : @Entity/@Table
+Auditoria --> TB_AUDITORIA : @Entity/@Table
+ConfiguracaoUnidade --> TB_CONFIG_UNIDADE : @Entity/@Table
+
+Perfil "1" -- "N" Usuario : @OneToMany / @ManyToOne
+Unidade "1" -- "N" Cliente : @OneToMany / @ManyToOne
+Cliente "1" -- "N" Pedido : @OneToMany / @ManyToOne
+Unidade "1" -- "N" Pedido : @OneToMany / @ManyToOne
+Pedido "1" -- "N" ItemPedido : @OneToMany / @ManyToOne
+Vasilhame "1" -- "N" ItemPedido : @OneToMany / @ManyToOne
+
+Unidade "1" -- "N" MovimentacaoEstoque : @OneToMany / @ManyToOne
+Vasilhame "1" -- "N" MovimentacaoEstoque : @OneToMany / @ManyToOne
+Usuario "1" -- "N" MovimentacaoEstoque : @OneToMany / @ManyToOne
+Pedido "0..1" -- "N" MovimentacaoEstoque : @ManyToOne opcional
+
+Cliente "1" -- "N" Comodato : @OneToMany / @ManyToOne
+Unidade "1" -- "N" Comodato : @OneToMany / @ManyToOne
+Vasilhame "1" -- "N" Comodato : @OneToMany / @ManyToOne
+
+Unidade "1" -- "N" Entregador : @OneToMany / @ManyToOne
+Unidade "1" -- "N" Veiculo : @OneToMany / @ManyToOne
+Unidade "1" -- "N" Rota : @OneToMany / @ManyToOne
+Entregador "1" -- "N" Rota : @OneToMany / @ManyToOne
+Rota "1" -- "N" Entrega : @OneToMany / @ManyToOne
+Pedido "1" -- "N" Entrega : @OneToMany / @ManyToOne
+
+Unidade "1" -- "N" Caixa : @OneToMany / @ManyToOne
+Pedido "1" -- "N" ContaAReceber : @OneToMany / @ManyToOne
+Cliente "1" -- "N" ContaAReceber : @OneToMany / @ManyToOne
+Caixa "1" -- "N" ContaAReceber : @OneToMany / @ManyToOne
+
+Usuario "1" -- "N" Auditoria : @OneToMany / @ManyToOne
+Unidade "1" -- "N" Auditoria : @OneToMany / @ManyToOne
+Unidade "1" -- "N" ConfiguracaoUnidade : @OneToMany / @ManyToOne
+
+note bottom
+  Modelo inicial de ORM alinhado ao DDE.
+  Implementacao final pode ajustar nomes fisicos de tabela/coluna,
+  cascatas, fetch type, indices e constraints.
+end note
+
+@enduml

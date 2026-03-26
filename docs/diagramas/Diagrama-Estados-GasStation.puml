@@ -1,0 +1,66 @@
+@startuml
+title GasStation - Diagrama de Estados
+skinparam linetype ortho
+
+' =========================================================
+' Fluxo 1: Pedido
+' =========================================================
+state "Pedido" as Pedido {
+  [*] --> Rascunho
+  Rascunho --> Confirmado : confirmarPedido()\n[estoque >= itens &&\nregra de credito OK]
+  Confirmado --> EmRota : alocarRota()
+  EmRota --> Entregue : confirmarEntrega()
+  Rascunho --> Cancelado : cancelarPedido(motivo)
+  Confirmado --> Cancelado : cancelarPedido(motivo)
+  EmRota --> Cancelado : cancelarExcepcional()\n[perfil autorizado]
+  Entregue --> [*]
+  Cancelado --> [*]
+}
+
+' =========================================================
+' Fluxo 2: Conta a Receber
+' =========================================================
+state "ContaAReceber" as Conta {
+  [*] --> Aberta
+  Aberta --> ParcialmentePaga : registrarBaixaParcial(valor)
+  ParcialmentePaga --> ParcialmentePaga : registrarBaixaParcial(valor)
+  Aberta --> Quitada : registrarBaixaTotal()
+  ParcialmentePaga --> Quitada : quitarSaldo()
+  Aberta --> Inadimplente : vencimentoExpirado()
+  ParcialmentePaga --> Inadimplente : vencimentoExpirado()
+  Inadimplente --> Quitada : negociarEReceber()
+  Quitada --> [*]
+}
+
+' =========================================================
+' Fluxo 3: Movimentacao de Estoque
+' =========================================================
+state "MovimentacaoEstoque" as Mov {
+  [*] --> Registrada
+  Registrada --> Conciliada : conciliarMovimentacao()
+  Registrada --> Estornada : estornarMovimentacao()\n[perfil autorizado]
+  Conciliada --> [*]
+  Estornada --> [*]
+}
+
+note right of Pedido
+  Regras importantes:
+  - Nao permitir salto de status invalido.
+  - Pedido entregue nao pode ser cancelado.
+  - Cancelamento deve registrar motivo, usuario e data/hora.
+end note
+
+note right of Conta
+  Regras importantes:
+  - Permitir baixa parcial.
+  - Atualizar saldo em aberto automaticamente.
+  - Bloquear lancamentos apos fechamento de caixa,\nexceto perfil autorizado.
+end note
+
+note right of Mov
+  Regras importantes:
+  - Toda movimentacao registra usuario, unidade e origem.
+  - Nao permitir estoque negativo na confirmacao de pedido.
+end note
+
+@enduml

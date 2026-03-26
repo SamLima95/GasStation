@@ -1,0 +1,212 @@
+@startuml
+hide circle
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+entity "PERFIL" as PERFIL {
+  *id : uuid <<PK>>
+  --
+  nome : string
+  descricao : string
+}
+
+entity "USUARIO" as USUARIO {
+  *id : uuid <<PK>>
+  --
+  nome : string
+  email : string
+  senha_hash : string
+  ativo : boolean
+  criado_em : datetime
+  perfil_id : uuid <<FK>>
+}
+
+entity "UNIDADE" as UNIDADE {
+  *id : uuid <<PK>>
+  --
+  nome : string
+  tipo : string
+  ativa : boolean
+}
+
+entity "USUARIO_UNIDADE" as USUARIO_UNIDADE {
+  *usuario_id : uuid <<FK>>
+  *unidade_id : uuid <<FK>>
+  --
+  nivel_acesso : string
+}
+
+entity "CLIENTE" as CLIENTE {
+  *id : uuid <<PK>>
+  --
+  nome : string
+  documento : string
+  limite_credito : decimal
+  saldo_devedor : decimal
+  unidade_id : uuid <<FK>>
+}
+
+entity "PEDIDO" as PEDIDO {
+  *id : uuid <<PK>>
+  --
+  cliente_id : uuid <<FK>>
+  unidade_id : uuid <<FK>>
+  status : string
+  valor_total : decimal
+  data_pedido : datetime
+  data_entrega_prevista : datetime
+}
+
+entity "ITEM_PEDIDO" as ITEM_PEDIDO {
+  *id : uuid <<PK>>
+  --
+  pedido_id : uuid <<FK>>
+  vasilhame_id : uuid <<FK>>
+  quantidade : int
+  preco_unitario : decimal
+}
+
+entity "VASILHAME" as VASILHAME {
+  *id : uuid <<PK>>
+  --
+  tipo : string
+  descricao : string
+  capacidade : decimal
+}
+
+entity "MOVIMENTACAO_ESTOQUE" as MOVIMENTACAO_ESTOQUE {
+  *id : uuid <<PK>>
+  --
+  unidade_id : uuid <<FK>>
+  vasilhame_id : uuid <<FK>>
+  usuario_id : uuid <<FK>>
+  pedido_id : uuid <<FK>>
+  tipo_movimentacao : string
+  quantidade : int
+  data_hora : datetime
+}
+
+entity "COMODATO" as COMODATO {
+  *id : uuid <<PK>>
+  --
+  cliente_id : uuid <<FK>>
+  unidade_id : uuid <<FK>>
+  vasilhame_id : uuid <<FK>>
+  saldo_comodato : int
+  atualizado_em : datetime
+}
+
+entity "ROTA" as ROTA {
+  *id : uuid <<PK>>
+  --
+  unidade_id : uuid <<FK>>
+  entregador_id : uuid <<FK>>
+  data_rota : datetime
+  status : string
+}
+
+entity "ENTREGA" as ENTREGA {
+  *id : uuid <<PK>>
+  --
+  rota_id : uuid <<FK>>
+  pedido_id : uuid <<FK>>
+  status : string
+  data_confirmacao : datetime
+}
+
+entity "ENTREGADOR" as ENTREGADOR {
+  *id : uuid <<PK>>
+  --
+  nome : string
+  documento : string
+  ativo : boolean
+  unidade_id : uuid <<FK>>
+}
+
+entity "VEICULO" as VEICULO {
+  *id : uuid <<PK>>
+  --
+  placa : string
+  modelo : string
+  ativo : boolean
+  unidade_id : uuid <<FK>>
+}
+
+entity "CAIXA" as CAIXA {
+  *id : uuid <<PK>>
+  --
+  unidade_id : uuid <<FK>>
+  data_abertura : date
+  data_fechamento : date
+  status : string
+}
+
+entity "CONTA_A_RECEBER" as CONTA_A_RECEBER {
+  *id : uuid <<PK>>
+  --
+  pedido_id : uuid <<FK>>
+  cliente_id : uuid <<FK>>
+  caixa_id : uuid <<FK>>
+  valor_original : decimal
+  valor_aberto : decimal
+  status : string
+  vencimento : date
+}
+
+entity "AUDITORIA" as AUDITORIA {
+  *id : uuid <<PK>>
+  --
+  entidade : string
+  entidade_id : uuid
+  usuario_id : uuid <<FK>>
+  unidade_id : uuid <<FK>>
+  data_hora : datetime
+  acao : string
+  alteracao : string
+}
+
+entity "CONFIGURACAO_UNIDADE" as CONFIGURACAO_UNIDADE {
+  *id : uuid <<PK>>
+  --
+  unidade_id : uuid <<FK>>
+  chave : string
+  valor : string
+  atualizado_em : datetime
+}
+
+PERFIL ||--o{ USUARIO : define
+USUARIO ||--o{ USUARIO_UNIDADE : possui
+UNIDADE ||--o{ USUARIO_UNIDADE : autoriza
+
+UNIDADE ||--o{ CLIENTE : atende
+CLIENTE ||--o{ PEDIDO : realiza
+UNIDADE ||--o{ PEDIDO : origina
+PEDIDO ||--|{ ITEM_PEDIDO : contem
+VASILHAME ||--o{ ITEM_PEDIDO : item
+
+UNIDADE ||--o{ MOVIMENTACAO_ESTOQUE : movimenta
+VASILHAME ||--o{ MOVIMENTACAO_ESTOQUE : movimentado
+USUARIO ||--o{ MOVIMENTACAO_ESTOQUE : registra
+PEDIDO ||--o{ MOVIMENTACAO_ESTOQUE : origem_opcional
+
+CLIENTE ||--o{ COMODATO : possui
+UNIDADE ||--o{ COMODATO : controla
+VASILHAME ||--o{ COMODATO : vincula
+
+UNIDADE ||--o{ ROTA : planeja
+ENTREGADOR ||--o{ ROTA : executa
+ROTA ||--|{ ENTREGA : agrega
+PEDIDO ||--o{ ENTREGA : gera
+UNIDADE ||--o{ ENTREGADOR : aloca
+UNIDADE ||--o{ VEICULO : disponibiliza
+
+UNIDADE ||--o{ CAIXA : mantem
+PEDIDO ||--o{ CONTA_A_RECEBER : gera
+CLIENTE ||--o{ CONTA_A_RECEBER : deve
+CAIXA ||--o{ CONTA_A_RECEBER : baixa
+
+USUARIO ||--o{ AUDITORIA : causa
+UNIDADE ||--o{ AUDITORIA : contextualiza
+UNIDADE ||--o{ CONFIGURACAO_UNIDADE : parametriza
+
+@enduml
