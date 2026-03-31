@@ -51,10 +51,10 @@ echo ""
 
 # ---- Fases futuras (descomentar conforme implementar) ----
 
-# echo "--- order-service ---"
-# cd "$ROOT_DIR/packages/order-service"
-# "$PRISMA_BIN" migrate deploy --schema=./prisma/schema.prisma
-# echo ""
+echo "--- order-service ---"
+cd "$ROOT_DIR/packages/order-service"
+"$PRISMA_BIN" migrate deploy --schema=./prisma/schema.prisma
+echo ""
 
 # echo "--- financial-service ---"
 # cd "$ROOT_DIR/packages/financial-service"

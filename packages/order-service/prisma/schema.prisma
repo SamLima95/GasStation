@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("ORDER_DATABASE_URL")
+}
+
+enum StatusPedido {
+  PENDENTE
+  CONFIRMADO
+  ENTREGUE
+  CANCELADO
+}
+
+enum TipoPagamento {
+  A_VISTA
+  FIADO
+  CARTAO
+  PIX
+}
+
+model ClienteModel {
+  id             String   @id @default(uuid())
+  nome           String
+  documento      String   @unique
+  limiteCredito  Decimal  @map("limite_credito") @db.Decimal(12, 2)
+  saldoDevedor   Decimal  @map("saldo_devedor") @db.Decimal(12, 2) @default(0)
+  unidadeId      String   @map("unidade_id")
+  createdAt      DateTime @map("created_at") @default(now())
+
+  pedidos        PedidoModel[]
+
+  @@map("clientes")
+}
+
+model PedidoModel {
+  id                   String        @id @default(uuid())
+  clienteId            String        @map("cliente_id")
+  unidadeId            String        @map("unidade_id")
+  status               StatusPedido  @default(PENDENTE)
+  tipoPagamento        TipoPagamento @map("tipo_pagamento")
+  valorTotal           Decimal       @map("valor_total") @db.Decimal(12, 2)
+  dataPedido           DateTime      @map("data_pedido") @default(now())
+  dataEntregaPrevista  DateTime?     @map("data_entrega_prevista")
+
+  cliente              ClienteModel  @relation(fields: [clienteId], references: [id])
+  itens                ItemPedidoModel[]
+
+  @@map("pedidos")
+}
+
+model ItemPedidoModel {
+  id              String      @id @default(uuid())
+  pedidoId        String      @map("pedido_id")
+  vasilhameId     String      @map("vasilhame_id")
+  quantidade      Int
+  precoUnitario   Decimal     @map("preco_unitario") @db.Decimal(12, 2)
+
+  pedido          PedidoModel @relation(fields: [pedidoId], references: [id])
+
+  @@map("itens_pedido")
+}
+
+model ReplicatedUserModel {
+  id                   String    @id
+  email                String
+  name                 String
+  createdAt            DateTime  @map("created_at")
+  lastEventAt          DateTime  @map("last_event_at")
+  lastEventOccurredAt  DateTime? @map("last_event_occurred_at")
+
+  @@map("replicated_users")
+}
