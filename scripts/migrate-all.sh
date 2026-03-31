@@ -56,10 +56,10 @@ cd "$ROOT_DIR/packages/order-service"
 "$PRISMA_BIN" migrate deploy --schema=./prisma/schema.prisma
 echo ""
 
-# echo "--- financial-service ---"
-# cd "$ROOT_DIR/packages/financial-service"
-# "$PRISMA_BIN" migrate deploy --schema=./prisma/schema.prisma
-# echo ""
+echo "--- financial-service ---"
+cd "$ROOT_DIR/packages/financial-service"
+"$PRISMA_BIN" migrate deploy --schema=./prisma/schema.prisma
+echo ""
 
 # echo "--- logistics-service ---"
 # cd "$ROOT_DIR/packages/logistics-service"

@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("FINANCIAL_DATABASE_URL")
+}
+
+enum StatusCaixa {
+  ABERTO
+  FECHADO
+}
+
+enum StatusContaAReceber {
+  PENDENTE
+  PAGO_PARCIAL
+  PAGO
+  VENCIDO
+}
+
+model CaixaModel {
+  id             String       @id @default(uuid())
+  unidadeId      String       @map("unidade_id")
+  dataAbertura   DateTime     @map("data_abertura") @default(now())
+  dataFechamento DateTime?    @map("data_fechamento")
+  status         StatusCaixa  @default(ABERTO)
+  saldoInicial   Decimal      @map("saldo_inicial") @db.Decimal(12, 2)
+  saldoFinal     Decimal?     @map("saldo_final") @db.Decimal(12, 2)
+
+  contasAReceber ContaAReceberModel[]
+
+  @@map("caixas")
+}
+
+model ContaAReceberModel {
+  id             String               @id @default(uuid())
+  pedidoId       String               @map("pedido_id")
+  clienteId      String               @map("cliente_id")
+  caixaId        String?              @map("caixa_id")
+  valorOriginal  Decimal              @map("valor_original") @db.Decimal(12, 2)
+  valorAberto    Decimal              @map("valor_aberto") @db.Decimal(12, 2)
+  status         StatusContaAReceber  @default(PENDENTE)
+  vencimento     DateTime
+  createdAt      DateTime             @map("created_at") @default(now())
+
+  caixa          CaixaModel?          @relation(fields: [caixaId], references: [id])
+
+  @@map("contas_a_receber")
+}
+
+model ReplicatedUserModel {
+  id                   String    @id
+  email                String
+  name                 String
+  createdAt            DateTime  @map("created_at")
+  lastEventAt          DateTime  @map("last_event_at")
+  lastEventOccurredAt  DateTime? @map("last_event_occurred_at")
+
+  @@map("replicated_users")
+}

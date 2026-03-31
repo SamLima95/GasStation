@@ -30,6 +30,7 @@ export class ConfirmPedidoUseCase {
       unidadeId: pedido.unidadeId,
       valorTotal: pedido.valorTotal,
       status: pedido.status,
+      tipoPagamento: pedido.tipoPagamento,
     });
 
     return {
