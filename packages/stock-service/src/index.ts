@@ -1,7 +1,9 @@
 import path from "path";
 import { config as loadEnv } from "dotenv";
 
+// Tenta carregar .env do cwd e da raiz do monorepo como fallback
 loadEnv({ path: path.resolve(process.cwd(), ".env") });
+loadEnv({ path: path.resolve(process.cwd(), "../../.env") });
 
 import { createContainer } from "./container";
 import { createApp } from "./app";
