@@ -1,0 +1,13 @@
+export enum StatusRota {
+  PLANEJADA = "PLANEJADA",
+  EM_ANDAMENTO = "EM_ANDAMENTO",
+  FINALIZADA = "FINALIZADA",
+  CANCELADA = "CANCELADA",
+}
+
+export enum StatusEntrega {
+  PENDENTE = "PENDENTE",
+  EM_TRANSITO = "EM_TRANSITO",
+  ENTREGUE = "ENTREGUE",
+  FALHA = "FALHA",
+}

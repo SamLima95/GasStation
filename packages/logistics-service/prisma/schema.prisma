@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("LOGISTICS_DATABASE_URL")
+}
+
+enum StatusRota {
+  PLANEJADA
+  EM_ANDAMENTO
+  FINALIZADA
+  CANCELADA
+}
+
+enum StatusEntrega {
+  PENDENTE
+  EM_TRANSITO
+  ENTREGUE
+  FALHA
+}
+
+model EntregadorModel {
+  id        String  @id @default(uuid())
+  nome      String
+  documento String
+  ativo     Boolean @default(true)
+  unidadeId String  @map("unidade_id")
+
+  rotas RotaModel[]
+
+  @@map("entregadores")
+}
+
+model VeiculoModel {
+  id        String  @id @default(uuid())
+  placa     String  @unique
+  modelo    String
+  ativo     Boolean @default(true)
+  unidadeId String  @map("unidade_id")
+
+  rotas RotaModel[]
+
+  @@map("veiculos")
+}
+
+model RotaModel {
+  id           String     @id @default(uuid())
+  unidadeId    String     @map("unidade_id")
+  entregadorId String     @map("entregador_id")
+  veiculoId    String     @map("veiculo_id")
+  dataRota     DateTime   @map("data_rota")
+  status       StatusRota @default(PLANEJADA)
+
+  entregador EntregadorModel @relation(fields: [entregadorId], references: [id])
+  veiculo    VeiculoModel    @relation(fields: [veiculoId], references: [id])
+  entregas   EntregaModel[]
+
+  @@map("rotas")
+}
+
+model EntregaModel {
+  id              String        @id @default(uuid())
+  rotaId          String?       @map("rota_id")
+  pedidoId        String        @map("pedido_id")
+  status          StatusEntrega @default(PENDENTE)
+  dataConfirmacao DateTime?     @map("data_confirmacao")
+
+  rota RotaModel? @relation(fields: [rotaId], references: [id])
+
+  @@map("entregas")
+}
+
+model ReplicatedUserModel {
+  id                  String    @id
+  email               String
+  name                String
+  createdAt           DateTime  @map("created_at")
+  lastEventAt         DateTime  @map("last_event_at")
+  lastEventOccurredAt DateTime? @map("last_event_occurred_at")
+
+  @@map("replicated_users")
+}
