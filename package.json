@@ -10,10 +10,13 @@
     "test": "pnpm -r run test",
     "dev:identity": "pnpm --filter identity-service run dev",
     "dev:catalog": "pnpm --filter catalog-service run dev",
+    "dev:stock": "pnpm --filter stock-service run dev",
     "dev:api-docs": "pnpm --filter api-docs run dev",
-    "dev": "pnpm run dev:identity & pnpm run dev:catalog & pnpm run dev:api-docs",
+    "dev": "pnpm run dev:identity & pnpm run dev:catalog & pnpm run dev:stock & pnpm run dev:api-docs",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
+    "docker:fresh": "docker-compose down -v && docker-compose up -d",
+    "migrate:all": "bash scripts/migrate-all.sh",
     "load-test": "tsx scripts/load-test.ts"
   },
   "engines": {

@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("STOCK_DATABASE_URL")
+}
+
+model VasilhameModel {
+  id          String   @id @default(uuid())
+  tipo        String
+  descricao   String
+  capacidade  Float
+  createdAt   DateTime @map("created_at") @default(now())
+
+  movimentacoes MovimentacaoEstoqueModel[]
+  comodatos     ComodatoModel[]
+
+  @@map("vasilhames")
+}
+
+enum TipoMovimentacao {
+  ENTRADA
+  SAIDA
+  RETORNO
+  AVARIA
+  AJUSTE
+}
+
+model MovimentacaoEstoqueModel {
+  id                 String            @id @default(uuid())
+  unidadeId          String            @map("unidade_id")
+  vasilhameId        String            @map("vasilhame_id")
+  usuarioId          String            @map("usuario_id")
+  pedidoId           String?           @map("pedido_id")
+  tipoMovimentacao   TipoMovimentacao  @map("tipo_movimentacao")
+  quantidade         Int
+  dataHora           DateTime          @map("data_hora") @default(now())
+
+  vasilhame          VasilhameModel    @relation(fields: [vasilhameId], references: [id])
+
+  @@map("movimentacoes_estoque")
+}
+
+model ComodatoModel {
+  id              String   @id @default(uuid())
+  clienteId       String   @map("cliente_id")
+  unidadeId       String   @map("unidade_id")
+  vasilhameId     String   @map("vasilhame_id")
+  saldoComodato   Int      @map("saldo_comodato")
+  atualizadoEm    DateTime @map("atualizado_em") @updatedAt
+
+  vasilhame       VasilhameModel @relation(fields: [vasilhameId], references: [id])
+
+  @@unique([clienteId, unidadeId, vasilhameId])
+  @@map("comodatos")
+}
+
+model ReplicatedUserModel {
+  id                   String    @id
+  email                String
+  name                 String
+  createdAt            DateTime  @map("created_at")
+  lastEventAt          DateTime  @map("last_event_at")
+  lastEventOccurredAt  DateTime? @map("last_event_occurred_at")
+
+  @@map("replicated_users")
+}
