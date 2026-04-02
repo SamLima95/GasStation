@@ -4,6 +4,9 @@ import {
   InvalidCredentialsError,
   InvalidEmailError,
   PasswordValidationError,
+  UnidadeNotFoundError,
+  UserAlreadyLinkedError,
+  UserNotFoundError,
 } from "../../../application/errors";
 
 /**
@@ -15,4 +18,7 @@ export const mapApplicationErrorToHttp = createErrorToHttpMapper([
   [InvalidCredentialsError, 401],
   [InvalidEmailError, 400],
   [PasswordValidationError, 400],
+  [UnidadeNotFoundError, 404],
+  [UserAlreadyLinkedError, 409],
+  [UserNotFoundError, 404],
 ]);

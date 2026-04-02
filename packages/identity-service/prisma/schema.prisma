@@ -16,6 +16,7 @@ model UserModel {
   createdAt      DateTime             @map("created_at")
   authCredential AuthCredentialModel?
   oauthAccounts  OAuthAccountModel[]
+  unidades       UsuarioUnidadeModel[]
 
   @@map("users")
 }
@@ -39,6 +40,46 @@ model OAuthAccountModel {
 
   @@unique([provider, providerId])
   @@map("oauth_accounts")
+}
+
+model UnidadeModel {
+  id        String   @id @default(uuid())
+  nome      String
+  tipo      String   // "filial" | "deposito"
+  status    String   @default("ativa") // "ativa" | "inativa"
+  createdAt DateTime @map("created_at")
+
+  usuarios       UsuarioUnidadeModel[]
+  configuracoes  ConfiguracaoUnidadeModel[]
+
+  @@map("unidades")
+}
+
+model UsuarioUnidadeModel {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  unidadeId String   @map("unidade_id")
+  nivel     String   @default("operador") // "operador" | "gerente" | "admin_holding"
+  createdAt DateTime @map("created_at")
+
+  user    UserModel    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unidade UnidadeModel @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, unidadeId])
+  @@map("usuario_unidade")
+}
+
+model ConfiguracaoUnidadeModel {
+  id        String   @id @default(uuid())
+  unidadeId String   @map("unidade_id")
+  chave     String
+  valor     String
+  createdAt DateTime @map("created_at")
+
+  unidade UnidadeModel @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+
+  @@unique([unidadeId, chave])
+  @@map("configuracao_unidade")
 }
 
 // Outbox table for reliable event publishing (Outbox Pattern). Rows are published by the outbox relay.

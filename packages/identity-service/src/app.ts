@@ -13,6 +13,7 @@ import type { HttpErrorMapping } from "@lframework/shared";
 export interface AppContainer {
   userRoutes: Router;
   authRoutes: Router;
+  unidadeRoutes: Router;
   mapApplicationErrorToHttp: (error: unknown) => { statusCode: number; message: string } | null;
 }
 
@@ -59,6 +60,7 @@ export function createApp(
 
   app.use("/api", container.userRoutes);
   app.use("/api", container.authRoutes);
+  app.use("/api", container.unidadeRoutes);
 
   app.get("/health", createHealthHandler("identity-service"));
 

@@ -8,6 +8,9 @@ import { registerSchema } from "./application/dtos/register.dto";
 import { loginSchema } from "./application/dtos/login.dto";
 import { createUserSchema } from "./application/dtos/create-user.dto";
 import { userResponseDtoSchema } from "./application/dtos/user-response.dto";
+import { createUnidadeSchema, unidadeResponseDtoSchema } from "./application/dtos/unidade.dto";
+import { linkUserToUnidadeSchema, usuarioUnidadeResponseDtoSchema } from "./application/dtos/usuario-unidade.dto";
+import { upsertConfiguracaoSchema, configuracaoUnidadeResponseDtoSchema } from "./application/dtos/configuracao-unidade.dto";
 
 extendZodWithOpenApi(z);
 
@@ -177,6 +180,112 @@ registry.registerPath({
       description: "Não encontrado",
       content: { "application/json": { schema: ErrorSchema } },
     },
+  },
+});
+
+// ── Unidade schemas ──
+const CreateUnidadeBodySchema = createUnidadeSchema.openapi("CreateUnidadeBody");
+const UnidadeResponseSchema = unidadeResponseDtoSchema.openapi("UnidadeResponse");
+const LinkUserToUnidadeBodySchema = linkUserToUnidadeSchema.openapi("LinkUserToUnidadeBody");
+const UsuarioUnidadeResponseSchema = usuarioUnidadeResponseDtoSchema.openapi("UsuarioUnidadeResponse");
+const UpsertConfiguracaoBodySchema = upsertConfiguracaoSchema.omit({ unidadeId: true }).openapi("UpsertConfiguracaoBody");
+const ConfiguracaoUnidadeResponseSchema = configuracaoUnidadeResponseDtoSchema.openapi("ConfiguracaoUnidadeResponse");
+
+registry.registerPath({
+  method: "post",
+  path: "/api/unidades",
+  summary: "Criar unidade (admin)",
+  tags: ["Unidades"],
+  security: [{ bearerAuth: [] }],
+  request: { body: { content: { "application/json": { schema: CreateUnidadeBodySchema } } } },
+  responses: {
+    201: { description: "Criada", content: { "application/json": { schema: UnidadeResponseSchema } } },
+    400: { description: "Validação", content: { "application/json": { schema: ErrorSchema } } },
+    401: { description: "Não autenticado", content: { "application/json": { schema: ErrorSchema } } },
+    403: { description: "Sem permissão", content: { "application/json": { schema: ErrorSchema } } },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/unidades",
+  summary: "Listar unidades",
+  tags: ["Unidades"],
+  security: [{ bearerAuth: [] }],
+  responses: {
+    200: { description: "OK", content: { "application/json": { schema: z.array(UnidadeResponseSchema) } } },
+    401: { description: "Não autenticado", content: { "application/json": { schema: ErrorSchema } } },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/unidades/{id}",
+  summary: "Buscar unidade por ID",
+  tags: ["Unidades"],
+  security: [{ bearerAuth: [] }],
+  request: { params: z.object({ id: z.string().uuid() }) },
+  responses: {
+    200: { description: "OK", content: { "application/json": { schema: UnidadeResponseSchema } } },
+    401: { description: "Não autenticado", content: { "application/json": { schema: ErrorSchema } } },
+    404: { description: "Não encontrada", content: { "application/json": { schema: ErrorSchema } } },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/unidades/usuarios",
+  summary: "Vincular usuário a unidade (admin)",
+  tags: ["Unidades"],
+  security: [{ bearerAuth: [] }],
+  request: { body: { content: { "application/json": { schema: LinkUserToUnidadeBodySchema } } } },
+  responses: {
+    201: { description: "Vinculado", content: { "application/json": { schema: UsuarioUnidadeResponseSchema } } },
+    400: { description: "Validação", content: { "application/json": { schema: ErrorSchema } } },
+    404: { description: "Usuário ou unidade não encontrada", content: { "application/json": { schema: ErrorSchema } } },
+    409: { description: "Já vinculado", content: { "application/json": { schema: ErrorSchema } } },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/unidades/usuarios/{userId}",
+  summary: "Listar unidades de um usuário",
+  tags: ["Unidades"],
+  security: [{ bearerAuth: [] }],
+  request: { params: z.object({ userId: z.string().uuid() }) },
+  responses: {
+    200: { description: "OK", content: { "application/json": { schema: z.array(UsuarioUnidadeResponseSchema) } } },
+    401: { description: "Não autenticado", content: { "application/json": { schema: ErrorSchema } } },
+  },
+});
+
+registry.registerPath({
+  method: "put",
+  path: "/api/unidades/{id}/configuracoes",
+  summary: "Criar/atualizar configuração de unidade (admin)",
+  tags: ["Unidades"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    body: { content: { "application/json": { schema: UpsertConfiguracaoBodySchema } } },
+  },
+  responses: {
+    200: { description: "OK", content: { "application/json": { schema: ConfiguracaoUnidadeResponseSchema } } },
+    404: { description: "Unidade não encontrada", content: { "application/json": { schema: ErrorSchema } } },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/unidades/{id}/configuracoes",
+  summary: "Listar configurações de unidade",
+  tags: ["Unidades"],
+  security: [{ bearerAuth: [] }],
+  request: { params: z.object({ id: z.string().uuid() }) },
+  responses: {
+    200: { description: "OK", content: { "application/json": { schema: z.array(ConfiguracaoUnidadeResponseSchema) } } },
+    401: { description: "Não autenticado", content: { "application/json": { schema: ErrorSchema } } },
   },
 });
 

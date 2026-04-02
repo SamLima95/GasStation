@@ -7,6 +7,9 @@ import { PrismaAuthCredentialRepository } from "./adapters/driven/persistence/pr
 import { PrismaUserRegistrationPersistence } from "./adapters/driven/persistence/prisma-user-registration.repository";
 import { PrismaUserOAuthRegistrationPersistence } from "./adapters/driven/persistence/prisma-user-oauth-registration.repository";
 import { PrismaOAuthAccountRepository } from "./adapters/driven/persistence/prisma-oauth-account.repository";
+import { PrismaUnidadeRepository } from "./adapters/driven/persistence/prisma-unidade.repository";
+import { PrismaUsuarioUnidadeRepository } from "./adapters/driven/persistence/prisma-usuario-unidade.repository";
+import { PrismaConfiguracaoUnidadeRepository } from "./adapters/driven/persistence/prisma-configuracao-unidade.repository";
 import { RabbitMqEventPublisherAdapter } from "./adapters/driven/messaging/rabbitmq-event-publisher.adapter";
 import { OutboxRelayAdapter } from "./adapters/driven/messaging/outbox-relay.adapter";
 import type { IEventPublisher } from "./application/ports/event-publisher.port";
@@ -22,11 +25,20 @@ import { RegisterUseCase } from "./application/use-cases/register.use-case";
 import { LoginUseCase } from "./application/use-cases/login.use-case";
 import { GetCurrentUserUseCase } from "./application/use-cases/get-current-user.use-case";
 import { OAuthCallbackUseCase } from "./application/use-cases/oauth-callback.use-case";
+import { CreateUnidadeUseCase } from "./application/use-cases/create-unidade.use-case";
+import { ListUnidadesUseCase } from "./application/use-cases/list-unidades.use-case";
+import { GetUnidadeByIdUseCase } from "./application/use-cases/get-unidade-by-id.use-case";
+import { LinkUserToUnidadeUseCase } from "./application/use-cases/link-user-to-unidade.use-case";
+import { ListUserUnidadesUseCase } from "./application/use-cases/list-user-unidades.use-case";
+import { UpsertConfiguracaoUseCase } from "./application/use-cases/upsert-configuracao.use-case";
+import { ListConfiguracoesUseCase } from "./application/use-cases/list-configuracoes.use-case";
 import { UserController } from "./adapters/driving/http/user.controller";
 import { AuthController } from "./adapters/driving/http/auth.controller";
+import { UnidadeController } from "./adapters/driving/http/unidade.controller";
 import { createAuthMiddleware } from "@lframework/shared";
 import { createUserRoutes } from "./adapters/driving/http/routes";
 import { createAuthRoutes } from "./adapters/driving/http/auth.routes";
+import { createUnidadeRoutes } from "./adapters/driving/http/unidade.routes";
 import { mapApplicationErrorToHttp } from "./adapters/driving/http/error-to-http.mapper";
 
 /** Optional event publisher for tests (no-op connect/disconnect). When set, RabbitMQ is not used. */
@@ -61,6 +73,9 @@ interface IdentityCradle {
   registrationPersistence: PrismaUserRegistrationPersistence;
   userOAuthRegistrationPersistence: PrismaUserOAuthRegistrationPersistence;
   oauthAccountRepository: PrismaOAuthAccountRepository;
+  unidadeRepository: PrismaUnidadeRepository;
+  usuarioUnidadeRepository: PrismaUsuarioUnidadeRepository;
+  configuracaoUnidadeRepository: PrismaConfiguracaoUnidadeRepository;
   eventPublisher: IEventPublisher & { connect?: () => Promise<void>; disconnect?: () => Promise<void> };
   tokenService: JwtTokenService;
   passwordHasher: Argon2PasswordHasher;
@@ -75,11 +90,20 @@ interface IdentityCradle {
   loginUseCase: LoginUseCase;
   getCurrentUserUseCase: GetCurrentUserUseCase;
   oauthCallbackUseCase: OAuthCallbackUseCase;
+  createUnidadeUseCase: CreateUnidadeUseCase;
+  listUnidadesUseCase: ListUnidadesUseCase;
+  getUnidadeByIdUseCase: GetUnidadeByIdUseCase;
+  linkUserToUnidadeUseCase: LinkUserToUnidadeUseCase;
+  listUserUnidadesUseCase: ListUserUnidadesUseCase;
+  upsertConfiguracaoUseCase: UpsertConfiguracaoUseCase;
+  listConfiguracoesUseCase: ListConfiguracoesUseCase;
   userController: UserController;
   authController: AuthController;
+  unidadeController: UnidadeController;
   authMiddleware: ReturnType<typeof createAuthMiddleware>;
   userRoutes: ReturnType<typeof createUserRoutes>;
   authRoutes: ReturnType<typeof createAuthRoutes>;
+  unidadeRoutes: ReturnType<typeof createUnidadeRoutes>;
   outboxRelay: OutboxRelayAdapter;
 }
 
@@ -126,6 +150,15 @@ export function createContainer(config: ContainerConfig) {
     oauthAccountRepository: asFunction(
       (cradle: IdentityCradle) =>
         new PrismaOAuthAccountRepository(cradle.prisma)
+    ).singleton(),
+    unidadeRepository: asFunction(
+      (cradle: IdentityCradle) => new PrismaUnidadeRepository(cradle.prisma)
+    ).singleton(),
+    usuarioUnidadeRepository: asFunction(
+      (cradle: IdentityCradle) => new PrismaUsuarioUnidadeRepository(cradle.prisma)
+    ).singleton(),
+    configuracaoUnidadeRepository: asFunction(
+      (cradle: IdentityCradle) => new PrismaConfiguracaoUnidadeRepository(cradle.prisma)
     ).singleton(),
 
     eventPublisher: asFunction(
@@ -214,6 +247,30 @@ export function createContainer(config: ContainerConfig) {
         )
     ).singleton(),
 
+    createUnidadeUseCase: asFunction(
+      (cradle: IdentityCradle) => new CreateUnidadeUseCase(cradle.unidadeRepository)
+    ).singleton(),
+    listUnidadesUseCase: asFunction(
+      (cradle: IdentityCradle) => new ListUnidadesUseCase(cradle.unidadeRepository)
+    ).singleton(),
+    getUnidadeByIdUseCase: asFunction(
+      (cradle: IdentityCradle) => new GetUnidadeByIdUseCase(cradle.unidadeRepository)
+    ).singleton(),
+    linkUserToUnidadeUseCase: asFunction(
+      (cradle: IdentityCradle) =>
+        new LinkUserToUnidadeUseCase(cradle.usuarioUnidadeRepository, cradle.unidadeRepository, cradle.userRepository)
+    ).singleton(),
+    listUserUnidadesUseCase: asFunction(
+      (cradle: IdentityCradle) => new ListUserUnidadesUseCase(cradle.usuarioUnidadeRepository)
+    ).singleton(),
+    upsertConfiguracaoUseCase: asFunction(
+      (cradle: IdentityCradle) =>
+        new UpsertConfiguracaoUseCase(cradle.configuracaoUnidadeRepository, cradle.unidadeRepository)
+    ).singleton(),
+    listConfiguracoesUseCase: asFunction(
+      (cradle: IdentityCradle) => new ListConfiguracoesUseCase(cradle.configuracaoUnidadeRepository)
+    ).singleton(),
+
     userController: asFunction(
       (cradle: IdentityCradle) =>
         new UserController(cradle.createUserUseCase, cradle.getUserByIdUseCase)
@@ -231,6 +288,19 @@ export function createContainer(config: ContainerConfig) {
           cradle.baseUrl,
           cradle.cache,
           cradle.jwtExpiresInSeconds
+        )
+    ).singleton(),
+
+    unidadeController: asFunction(
+      (cradle: IdentityCradle) =>
+        new UnidadeController(
+          cradle.createUnidadeUseCase,
+          cradle.listUnidadesUseCase,
+          cradle.getUnidadeByIdUseCase,
+          cradle.linkUserToUnidadeUseCase,
+          cradle.listUserUnidadesUseCase,
+          cradle.upsertConfiguracaoUseCase,
+          cradle.listConfiguracoesUseCase
         )
     ).singleton(),
 
@@ -258,6 +328,16 @@ export function createContainer(config: ContainerConfig) {
         authMiddleware: ReturnType<typeof createAuthMiddleware>;
       }) => createAuthRoutes(authController, authMiddleware)
     ).singleton(),
+
+    unidadeRoutes: asFunction(
+      ({
+        unidadeController,
+        authMiddleware,
+      }: {
+        unidadeController: UnidadeController;
+        authMiddleware: ReturnType<typeof createAuthMiddleware>;
+      }) => createUnidadeRoutes(unidadeController, authMiddleware)
+    ).singleton(),
   });
 
   const c = awilix.cradle;
@@ -274,6 +354,9 @@ export function createContainer(config: ContainerConfig) {
     },
     get authRoutes() {
       return c.authRoutes;
+    },
+    get unidadeRoutes() {
+      return c.unidadeRoutes;
     },
     mapApplicationErrorToHttp,
     async connectRabbitMQ(): Promise<void> {

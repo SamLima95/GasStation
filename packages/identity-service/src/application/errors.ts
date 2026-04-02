@@ -36,3 +36,27 @@ export class PasswordValidationError extends AppError {
     Object.setPrototypeOf(this, PasswordValidationError.prototype);
   }
 }
+
+export class UnidadeNotFoundError extends AppError {
+  override name = "UnidadeNotFoundError";
+  constructor(message = "Unidade não encontrada") {
+    super(message);
+    Object.setPrototypeOf(this, UnidadeNotFoundError.prototype);
+  }
+}
+
+export class UserAlreadyLinkedError extends AppError {
+  override name = "UserAlreadyLinkedError";
+  constructor(message = "Usuário já vinculado a esta unidade") {
+    super(message);
+    Object.setPrototypeOf(this, UserAlreadyLinkedError.prototype);
+  }
+}
+
+export class UserNotFoundError extends AppError {
+  override name = "UserNotFoundError";
+  constructor(message = "Usuário não encontrado") {
+    super(message);
+    Object.setPrototypeOf(this, UserNotFoundError.prototype);
+  }
+}
