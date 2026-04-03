@@ -1,6 +1,6 @@
 /**
- * Mescla duas specs OpenAPI 3 em uma única, prefixando schemas para evitar colisões.
- * Mantém dois servers (Identity e Catalog) para o "Try it out" do Swagger.
+ * Mescla N specs OpenAPI 3 em uma única, prefixando schemas para evitar colisões.
+ * Cada spec gera um server para o "Try it out" do Swagger.
  */
 
 export interface OpenApiSpec {
@@ -12,6 +12,12 @@ export interface OpenApiSpec {
     securitySchemes?: Record<string, unknown>;
   };
   paths?: Record<string, unknown>;
+}
+
+export interface NamedSpec {
+  name: string;
+  prefix: string;
+  spec: OpenApiSpec;
 }
 
 const REF_PREFIX = "#/components/schemas/";
@@ -59,35 +65,43 @@ function prefixSpec(spec: OpenApiSpec, prefix: string): OpenApiSpec {
   };
 }
 
-export function mergeOpenApiSpecs(identitySpec: OpenApiSpec, catalogSpec: OpenApiSpec): OpenApiSpec {
-  const identity = prefixSpec(identitySpec, "Identity_");
-  const catalog = prefixSpec(catalogSpec, "Catalog_");
+export function mergeOpenApiSpecs(namedSpecs: NamedSpec[]): OpenApiSpec {
+  const prefixed = namedSpecs.map((s) => ({
+    ...s,
+    spec: prefixSpec(s.spec, s.prefix),
+  }));
 
-  const identityServers = identity.servers ?? [];
-  const catalogServers = catalog.servers ?? [];
-  const mergedServers = [
-    ...identityServers.map((s) => ({ ...s, description: s.description ?? "Identity Service" })),
-    ...catalogServers.map((s) => ({ ...s, description: s.description ?? "Catalog Service" })),
-  ];
+  const mergedServers = prefixed.flatMap((s) => {
+    const servers = s.spec.servers ?? [];
+    return servers.map((srv) => ({ ...srv, description: srv.description ?? s.name }));
+  });
+
+  const mergedSchemas: Record<string, unknown> = {};
+  let mergedSecuritySchemes: Record<string, unknown> = {};
+  const mergedPaths: Record<string, unknown> = {};
+
+  for (const s of prefixed) {
+    Object.assign(mergedSchemas, s.spec.components?.schemas);
+    if (s.spec.components?.securitySchemes) {
+      mergedSecuritySchemes = { ...mergedSecuritySchemes, ...s.spec.components.securitySchemes };
+    }
+    Object.assign(mergedPaths, s.spec.paths);
+  }
+
+  const serviceList = namedSpecs.map((s) => s.name).join(", ");
 
   return {
     openapi: "3.0.3",
     info: {
       title: "LFramework API",
       version: "1.0.0",
-      description: "Documentação unificada: Identity Service (auth, usuários) e Catalog Service (itens). Use o menu «Servers» para alternar o backend nas requisições.",
+      description: `Documentação unificada: ${serviceList}. Use o menu «Servers» para alternar o backend nas requisições.`,
     },
     servers: mergedServers,
     components: {
-      securitySchemes: identity.components?.securitySchemes ?? catalog.components?.securitySchemes ?? {},
-      schemas: {
-        ...identity.components?.schemas,
-        ...catalog.components?.schemas,
-      },
+      securitySchemes: mergedSecuritySchemes,
+      schemas: mergedSchemas,
     },
-    paths: {
-      ...identity.paths,
-      ...catalog.paths,
-    },
+    paths: mergedPaths,
   };
 }
