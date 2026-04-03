@@ -26,3 +26,8 @@ export const QUEUE_ORDER_CONFIRMED_LOGISTICS = "logistics.order_confirmed";
 export const QUEUE_ORDER_CONFIRMED_LOGISTICS_FAILED = "logistics.order_confirmed.failed";
 export const EXCHANGE_LOGISTICS_EVENTS = "logistics.events";
 export const DELIVERY_CONFIRMED_EVENT = "delivery_confirmed";
+
+// ── Audit Events ──
+export const EXCHANGE_AUDIT_EVENTS = "audit.events";
+export const QUEUE_AUDIT_LOGGED = "audit.logged";
+export const QUEUE_AUDIT_LOGGED_FAILED = "audit.logged.failed";

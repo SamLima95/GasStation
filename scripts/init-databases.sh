@@ -37,4 +37,7 @@ create_db "lframework_financial"
 # ---- Fase 4: Logistics Service ----
 create_db "lframework_logistics"
 
+# ---- Fase 6: Audit Service ----
+create_db "lframework_audit"
+
 echo "==> Todos os bancos criados com sucesso!"
