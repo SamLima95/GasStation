@@ -19,9 +19,10 @@ export class MovimentacaoController {
     }
   };
 
-  list = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  list = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const movimentacoes = await this.listMovimentacoesUseCase.execute();
+      const unidadeId = typeof req.query.unidadeId === "string" ? req.query.unidadeId : undefined;
+      const movimentacoes = await this.listMovimentacoesUseCase.execute(unidadeId);
       res.json(movimentacoes);
     } catch (err) {
       next(err);

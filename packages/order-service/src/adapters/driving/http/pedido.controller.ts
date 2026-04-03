@@ -21,9 +21,10 @@ export class PedidoController {
     }
   };
 
-  list = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  list = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const pedidos = await this.listPedidosUseCase.execute();
+      const unidadeId = typeof req.query.unidadeId === "string" ? req.query.unidadeId : undefined;
+      const pedidos = await this.listPedidosUseCase.execute(unidadeId);
       res.json(pedidos);
     } catch (err) {
       next(err);

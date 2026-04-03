@@ -14,8 +14,11 @@ export class ContaAReceberController {
     try { res.status(201).json(await this.createContaAReceberUseCase.execute(req.body)); } catch (err) { next(err); }
   };
 
-  list = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try { res.json(await this.listContasAReceberUseCase.execute()); } catch (err) { next(err); }
+  list = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const unidadeId = typeof req.query.unidadeId === "string" ? req.query.unidadeId : undefined;
+      res.json(await this.listContasAReceberUseCase.execute(unidadeId));
+    } catch (err) { next(err); }
   };
 
   receivePayment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

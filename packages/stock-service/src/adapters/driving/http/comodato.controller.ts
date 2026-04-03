@@ -19,9 +19,10 @@ export class ComodatoController {
     }
   };
 
-  list = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  list = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const comodatos = await this.listComodatosUseCase.execute();
+      const unidadeId = typeof req.query.unidadeId === "string" ? req.query.unidadeId : undefined;
+      const comodatos = await this.listComodatosUseCase.execute(unidadeId);
       res.json(comodatos);
     } catch (err) {
       next(err);

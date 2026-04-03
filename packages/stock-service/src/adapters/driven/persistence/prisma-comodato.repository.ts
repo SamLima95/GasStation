@@ -62,6 +62,18 @@ export class PrismaComodatoRepository implements IComodatoRepository {
     });
   }
 
+  async findByUnidadeId(unidadeId: string): Promise<Comodato[]> {
+    const rows = await this.prisma.comodatoModel.findMany({
+      where: { unidadeId },
+      orderBy: { atualizadoEm: "desc" },
+    });
+    return rows.map((row) =>
+      Comodato.reconstitute(
+        row.id, row.clienteId, row.unidadeId, row.vasilhameId, row.saldoComodato, row.atualizadoEm
+      )
+    );
+  }
+
   async findAll(): Promise<Comodato[]> {
     const rows = await this.prisma.comodatoModel.findMany({
       orderBy: { atualizadoEm: "desc" },

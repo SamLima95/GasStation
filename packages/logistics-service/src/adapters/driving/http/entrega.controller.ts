@@ -5,7 +5,7 @@ import { ConfirmEntregaUseCase } from "../../../application/use-cases/confirm-en
 
 export class EntregaController {
   constructor(private readonly listUC: ListEntregasUseCase, private readonly assignUC: AssignEntregaUseCase, private readonly confirmUC: ConfirmEntregaUseCase) {}
-  list = async (_req: Request, res: Response, next: NextFunction): Promise<void> => { try { res.json(await this.listUC.execute()); } catch (err) { next(err); } };
+  list = async (req: Request, res: Response, next: NextFunction): Promise<void> => { try { const unidadeId = typeof req.query.unidadeId === "string" ? req.query.unidadeId : undefined; res.json(await this.listUC.execute(unidadeId)); } catch (err) { next(err); } };
   assign = async (req: Request, res: Response, next: NextFunction): Promise<void> => { try { res.json(await this.assignUC.execute(req.params.id, req.body.rotaId)); } catch (err) { next(err); } };
   confirm = async (req: Request, res: Response, next: NextFunction): Promise<void> => { try { res.json(await this.confirmUC.execute(req.params.id)); } catch (err) { next(err); } };
 }

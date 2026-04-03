@@ -4,8 +4,10 @@ import type { PedidoResponseDto } from "../dtos/pedido-response.dto";
 export class ListPedidosUseCase {
   constructor(private readonly pedidoRepository: IPedidoRepository) {}
 
-  async execute(): Promise<PedidoResponseDto[]> {
-    const pedidos = await this.pedidoRepository.findAll();
+  async execute(unidadeId?: string): Promise<PedidoResponseDto[]> {
+    const pedidos = unidadeId
+      ? await this.pedidoRepository.findByUnidadeId(unidadeId)
+      : await this.pedidoRepository.findAll();
     return pedidos.map((p) => ({
       id: p.id,
       clienteId: p.clienteId,

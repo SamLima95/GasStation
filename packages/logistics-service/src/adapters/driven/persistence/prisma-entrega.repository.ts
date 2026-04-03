@@ -21,6 +21,10 @@ export class PrismaEntregaRepository implements IEntregaRepository {
     const rows = await this.prisma.entregaModel.findMany({ where: { status } });
     return rows.map((r) => Entrega.reconstitute(r.id, r.rotaId, r.pedidoId, r.status as StatusEntrega, r.dataConfirmacao));
   }
+  async findByRotaUnidadeId(unidadeId: string): Promise<Entrega[]> {
+    const rows = await this.prisma.entregaModel.findMany({ where: { rota: { unidadeId } } });
+    return rows.map((r) => Entrega.reconstitute(r.id, r.rotaId, r.pedidoId, r.status as StatusEntrega, r.dataConfirmacao));
+  }
   async findAll(): Promise<Entrega[]> {
     const rows = await this.prisma.entregaModel.findMany();
     return rows.map((r) => Entrega.reconstitute(r.id, r.rotaId, r.pedidoId, r.status as StatusEntrega, r.dataConfirmacao));

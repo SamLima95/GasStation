@@ -27,6 +27,14 @@ export class PrismaContaAReceberRepository implements IContaAReceberRepository {
     return rows.map((r) => ContaAReceber.reconstitute(r.id, r.pedidoId, r.clienteId, r.caixaId, r.valorOriginal.toNumber(), r.valorAberto.toNumber(), r.status as StatusContaAReceber, r.vencimento, r.createdAt));
   }
 
+  async findByCaixaUnidadeId(unidadeId: string): Promise<ContaAReceber[]> {
+    const rows = await this.prisma.contaAReceberModel.findMany({
+      where: { caixa: { unidadeId } },
+      orderBy: { createdAt: "desc" },
+    });
+    return rows.map((r) => ContaAReceber.reconstitute(r.id, r.pedidoId, r.clienteId, r.caixaId, r.valorOriginal.toNumber(), r.valorAberto.toNumber(), r.status as StatusContaAReceber, r.vencimento, r.createdAt));
+  }
+
   async findAll(): Promise<ContaAReceber[]> {
     const rows = await this.prisma.contaAReceberModel.findMany({ orderBy: { createdAt: "desc" } });
     return rows.map((r) => ContaAReceber.reconstitute(r.id, r.pedidoId, r.clienteId, r.caixaId, r.valorOriginal.toNumber(), r.valorAberto.toNumber(), r.status as StatusContaAReceber, r.vencimento, r.createdAt));

@@ -18,7 +18,10 @@ export class CaixaController {
     try { res.json(await this.closeCaixaUseCase.execute(req.params.id)); } catch (err) { next(err); }
   };
 
-  list = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try { res.json(await this.listCaixasUseCase.execute()); } catch (err) { next(err); }
+  list = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const unidadeId = typeof req.query.unidadeId === "string" ? req.query.unidadeId : undefined;
+      res.json(await this.listCaixasUseCase.execute(unidadeId));
+    } catch (err) { next(err); }
   };
 }

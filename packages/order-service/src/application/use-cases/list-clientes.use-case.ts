@@ -3,7 +3,6 @@ import type { ICacheService } from "@lframework/shared";
 import { clienteResponseDtoSchema, type ClienteResponseDto } from "../dtos/cliente-response.dto";
 import { z } from "zod";
 
-const CACHE_KEY = "clientes:list";
 const CACHE_TTL = 60;
 const clientesListCacheSchema = z.array(clienteResponseDtoSchema);
 
@@ -13,11 +12,14 @@ export class ListClientesUseCase {
     private readonly cache: ICacheService
   ) {}
 
-  async execute(): Promise<ClienteResponseDto[]> {
-    const cached = await this.cache.get(CACHE_KEY, clientesListCacheSchema);
+  async execute(unidadeId?: string): Promise<ClienteResponseDto[]> {
+    const cacheKey = unidadeId ? `clientes:list:${unidadeId}` : "clientes:list";
+    const cached = await this.cache.get(cacheKey, clientesListCacheSchema);
     if (cached) return cached;
 
-    const clientes = await this.clienteRepository.findAll();
+    const clientes = unidadeId
+      ? await this.clienteRepository.findByUnidadeId(unidadeId)
+      : await this.clienteRepository.findAll();
     const dtos: ClienteResponseDto[] = clientes.map((c) => ({
       id: c.id,
       nome: c.nome,
@@ -28,7 +30,7 @@ export class ListClientesUseCase {
       createdAt: c.createdAt.toISOString(),
     }));
 
-    await this.cache.set(CACHE_KEY, dtos, CACHE_TTL);
+    await this.cache.set(cacheKey, dtos, CACHE_TTL);
     return dtos;
   }
 }

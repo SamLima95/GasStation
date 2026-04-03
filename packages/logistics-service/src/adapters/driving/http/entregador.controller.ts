@@ -5,5 +5,5 @@ import { ListEntregadoresUseCase } from "../../../application/use-cases/list-ent
 export class EntregadorController {
   constructor(private readonly createUC: CreateEntregadorUseCase, private readonly listUC: ListEntregadoresUseCase) {}
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => { try { res.status(201).json(await this.createUC.execute(req.body)); } catch (err) { next(err); } };
-  list = async (_req: Request, res: Response, next: NextFunction): Promise<void> => { try { res.json(await this.listUC.execute()); } catch (err) { next(err); } };
+  list = async (req: Request, res: Response, next: NextFunction): Promise<void> => { try { const unidadeId = typeof req.query.unidadeId === "string" ? req.query.unidadeId : undefined; res.json(await this.listUC.execute(unidadeId)); } catch (err) { next(err); } };
 }

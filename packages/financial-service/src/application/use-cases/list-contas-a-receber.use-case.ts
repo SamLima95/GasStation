@@ -4,8 +4,10 @@ import type { ContaAReceberResponseDto } from "../dtos/conta-a-receber-response.
 export class ListContasAReceberUseCase {
   constructor(private readonly contaAReceberRepository: IContaAReceberRepository) {}
 
-  async execute(): Promise<ContaAReceberResponseDto[]> {
-    const contas = await this.contaAReceberRepository.findAll();
+  async execute(unidadeId?: string): Promise<ContaAReceberResponseDto[]> {
+    const contas = unidadeId
+      ? await this.contaAReceberRepository.findByCaixaUnidadeId(unidadeId)
+      : await this.contaAReceberRepository.findAll();
     return contas.map((c) => ({
       id: c.id, pedidoId: c.pedidoId, clienteId: c.clienteId, caixaId: c.caixaId,
       valorOriginal: c.valorOriginal, valorAberto: c.valorAberto, status: c.status,
