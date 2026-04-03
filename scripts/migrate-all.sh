@@ -66,4 +66,9 @@ cd "$ROOT_DIR/packages/logistics-service"
 "$PRISMA_BIN" migrate deploy --schema=./prisma/schema.prisma
 echo ""
 
+echo "--- audit-service ---"
+cd "$ROOT_DIR/packages/audit-service"
+"$PRISMA_BIN" migrate deploy --schema=./prisma/schema.prisma
+echo ""
+
 echo "==> Todas as migrations aplicadas com sucesso!"
