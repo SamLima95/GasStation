@@ -23,6 +23,7 @@ export function createOrderRoutes(
   router.get("/pedidos", authMiddleware, asyncHandler(pedidoController.list.bind(pedidoController)));
   router.post("/pedidos", authMiddleware, validateCreatePedido, asyncHandler(pedidoController.create.bind(pedidoController)));
   router.patch("/pedidos/:id/confirm", authMiddleware, asyncHandler(pedidoController.confirm.bind(pedidoController)));
+  router.get("/pedidos/:id/nota-fiscal", authMiddleware, asyncHandler(pedidoController.getNotaFiscal.bind(pedidoController)));
 
   return router;
 }

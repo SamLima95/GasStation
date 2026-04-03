@@ -24,3 +24,4 @@ export {
   requireUnitAccess,
   type UnitContextRequest,
 } from "./unit-context.middleware";
+export { apiVersionMiddleware } from "./api-version.middleware";

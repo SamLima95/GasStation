@@ -1,5 +1,4 @@
-import { Prisma } from "@prisma/client";
-import { PrismaClient } from "../../../../generated/prisma-client";
+import { Prisma, PrismaClient } from "../../../../generated/prisma-client";
 import type { IReplicatedUserStore } from "../../../application/ports/replicated-user-store.port";
 import type { UserCreatedPayload } from "@lframework/shared";
 

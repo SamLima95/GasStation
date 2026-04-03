@@ -1,13 +1,19 @@
+import { randomUUID } from "crypto";
 import type { IPedidoRepository } from "../ports/pedido-repository.port";
 import type { IEventPublisher } from "../ports/event-publisher.port";
+import type { INfEmitter } from "../ports/nf-emitter.port";
+import type { INotaFiscalRepository } from "../ports/nota-fiscal-repository.port";
 import type { PedidoResponseDto } from "../dtos/pedido-response.dto";
 import { PedidoNotFoundError, InvalidStatusTransitionError } from "../errors";
-import { EXCHANGE_ORDER_EVENTS, ORDER_CONFIRMED_EVENT } from "@lframework/shared";
+import { EXCHANGE_ORDER_EVENTS, ORDER_CONFIRMED_EVENT, logger } from "@lframework/shared";
+import { NotaFiscal } from "../../domain/entities/nota-fiscal.entity";
 
 export class ConfirmPedidoUseCase {
   constructor(
     private readonly pedidoRepository: IPedidoRepository,
-    private readonly eventPublisher: IEventPublisher
+    private readonly eventPublisher: IEventPublisher,
+    private readonly nfEmitter: INfEmitter,
+    private readonly notaFiscalRepository: INotaFiscalRepository
   ) {}
 
   async execute(pedidoId: string): Promise<PedidoResponseDto> {
@@ -32,6 +38,22 @@ export class ConfirmPedidoUseCase {
       status: pedido.status,
       tipoPagamento: pedido.tipoPagamento,
     });
+
+    // Emissão de NF-e assíncrona — falha não bloqueia confirmação (RN12)
+    try {
+      const nf = NotaFiscal.create(randomUUID(), pedido.id);
+      await this.notaFiscalRepository.save(nf);
+
+      const result = await this.nfEmitter.emitir(pedido.id, pedido.valorTotal, pedido.unidadeId);
+      if (result.status === "AUTORIZADA") {
+        nf.autorizar(result.chaveAcesso);
+      } else {
+        nf.rejeitar(result.mensagem);
+      }
+      await this.notaFiscalRepository.update(nf);
+    } catch (err) {
+      logger.error({ err, pedidoId: pedido.id }, "Falha na emissão de NF-e — pedido confirmado sem NF");
+    }
 
     return {
       id: pedido.id,

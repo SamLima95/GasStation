@@ -21,8 +21,10 @@ import { ListRotasUseCase } from "./application/use-cases/list-rotas.use-case";
 import { ListEntregasUseCase } from "./application/use-cases/list-entregas.use-case";
 import { AssignEntregaUseCase } from "./application/use-cases/assign-entrega.use-case";
 import { ConfirmEntregaUseCase } from "./application/use-cases/confirm-entrega.use-case";
+import { OptimizeRotaUseCase } from "./application/use-cases/optimize-rota.use-case";
 import { HandleOrderConfirmedUseCase } from "./application/use-cases/handle-order-confirmed.use-case";
 import { HandleUserCreatedUseCase } from "./application/use-cases/handle-user-created.use-case";
+import { StubRouteOptimizerAdapter } from "./adapters/driven/integration/stub-route-optimizer.adapter";
 import { EntregadorController } from "./adapters/driving/http/entregador.controller";
 import { VeiculoController } from "./adapters/driving/http/veiculo.controller";
 import { RotaController } from "./adapters/driving/http/rota.controller";
@@ -61,15 +63,17 @@ export function createContainer(config: LogisticsContainerConfig) {
     listVeiculosUseCase: asFunction((c: any) => new ListVeiculosUseCase(c.veiculoRepository)).singleton(),
     createRotaUseCase: asFunction((c: any) => new CreateRotaUseCase(c.rotaRepository, c.entregadorRepository, c.veiculoRepository)).singleton(),
     listRotasUseCase: asFunction((c: any) => new ListRotasUseCase(c.rotaRepository)).singleton(),
+    routeOptimizer: asFunction(() => new StubRouteOptimizerAdapter()).singleton(),
     listEntregasUseCase: asFunction((c: any) => new ListEntregasUseCase(c.entregaRepository)).singleton(),
     assignEntregaUseCase: asFunction((c: any) => new AssignEntregaUseCase(c.entregaRepository, c.rotaRepository)).singleton(),
     confirmEntregaUseCase: asFunction((c: any) => new ConfirmEntregaUseCase(c.entregaRepository, getPublisher())).singleton(),
+    optimizeRotaUseCase: asFunction((c: any) => new OptimizeRotaUseCase(c.entregaRepository, c.rotaRepository, c.routeOptimizer)).singleton(),
     handleOrderConfirmedUseCase: asFunction((c: any) => new HandleOrderConfirmedUseCase(c.entregaRepository)).singleton(),
     handleUserCreatedUseCase: asFunction((c: any) => new HandleUserCreatedUseCase(c.replicatedUserStore, c.cache)).singleton(),
 
     entregadorController: asFunction((c: any) => new EntregadorController(c.createEntregadorUseCase, c.listEntregadoresUseCase)).singleton(),
     veiculoController: asFunction((c: any) => new VeiculoController(c.createVeiculoUseCase, c.listVeiculosUseCase)).singleton(),
-    rotaController: asFunction((c: any) => new RotaController(c.createRotaUseCase, c.listRotasUseCase)).singleton(),
+    rotaController: asFunction((c: any) => new RotaController(c.createRotaUseCase, c.listRotasUseCase, c.optimizeRotaUseCase)).singleton(),
     entregaController: asFunction((c: any) => new EntregaController(c.listEntregasUseCase, c.assignEntregaUseCase, c.confirmEntregaUseCase)).singleton(),
 
     tokenVerifier: asFunction(({ config: c }: any) => new JwtTokenVerifier(c.jwtSecret)).singleton(),

@@ -7,7 +7,9 @@ import type { ICacheService } from "@lframework/shared";
 import { RedisCacheAdapter, createAuthMiddleware, JwtTokenVerifier } from "@lframework/shared";
 import { PrismaClienteRepository } from "./adapters/driven/persistence/prisma-cliente.repository";
 import { PrismaPedidoRepository } from "./adapters/driven/persistence/prisma-pedido.repository";
+import { PrismaNotaFiscalRepository } from "./adapters/driven/persistence/prisma-nota-fiscal.repository";
 import { PrismaReplicatedUserStore } from "./adapters/driven/persistence/prisma-replicated-user.store";
+import { StubNfEmitterAdapter } from "./adapters/driven/integration/stub-nf-emitter.adapter";
 import { RabbitMqEventPublisher } from "./adapters/driven/messaging/rabbitmq-event-publisher.adapter";
 import { RabbitMqUserEventsAdapter } from "./adapters/driving/messaging/rabbitmq-user-events.adapter";
 import { CreateClienteUseCase } from "./application/use-cases/create-cliente.use-case";
@@ -44,6 +46,8 @@ interface OrderCradle {
   cache: ICacheService;
   clienteRepository: PrismaClienteRepository;
   pedidoRepository: PrismaPedidoRepository;
+  notaFiscalRepository: PrismaNotaFiscalRepository;
+  nfEmitter: StubNfEmitterAdapter;
   replicatedUserStore: PrismaReplicatedUserStore;
   createClienteUseCase: CreateClienteUseCase;
   listClientesUseCase: ListClientesUseCase;
@@ -88,6 +92,8 @@ export function createContainer(config: OrderContainerConfig) {
 
     clienteRepository: asFunction((cradle: OrderCradle) => new PrismaClienteRepository(cradle.prisma)).singleton(),
     pedidoRepository: asFunction((cradle: OrderCradle) => new PrismaPedidoRepository(cradle.prisma)).singleton(),
+    notaFiscalRepository: asFunction((cradle: OrderCradle) => new PrismaNotaFiscalRepository(cradle.prisma)).singleton(),
+    nfEmitter: asFunction(() => new StubNfEmitterAdapter()).singleton(),
     replicatedUserStore: asFunction((cradle: OrderCradle) => new PrismaReplicatedUserStore(cradle.prisma)).singleton(),
 
     createClienteUseCase: asFunction((cradle: OrderCradle) =>
@@ -100,7 +106,7 @@ export function createContainer(config: OrderContainerConfig) {
       new CreatePedidoUseCase(cradle.pedidoRepository, cradle.clienteRepository, getEventPublisher())
     ).singleton(),
     confirmPedidoUseCase: asFunction((cradle: OrderCradle) =>
-      new ConfirmPedidoUseCase(cradle.pedidoRepository, getEventPublisher())
+      new ConfirmPedidoUseCase(cradle.pedidoRepository, getEventPublisher(), cradle.nfEmitter, cradle.notaFiscalRepository)
     ).singleton(),
     listPedidosUseCase: asFunction((cradle: OrderCradle) =>
       new ListPedidosUseCase(cradle.pedidoRepository)
@@ -113,7 +119,7 @@ export function createContainer(config: OrderContainerConfig) {
       new ClienteController(cradle.createClienteUseCase, cradle.listClientesUseCase)
     ).singleton(),
     pedidoController: asFunction((cradle: OrderCradle) =>
-      new PedidoController(cradle.createPedidoUseCase, cradle.listPedidosUseCase, cradle.confirmPedidoUseCase)
+      new PedidoController(cradle.createPedidoUseCase, cradle.listPedidosUseCase, cradle.confirmPedidoUseCase, cradle.notaFiscalRepository)
     ).singleton(),
 
     tokenVerifier: asFunction(({ config }: { config: OrderContainerConfig }) =>

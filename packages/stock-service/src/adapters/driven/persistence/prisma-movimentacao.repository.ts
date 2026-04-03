@@ -43,6 +43,18 @@ export class PrismaMovimentacaoRepository implements IMovimentacaoRepository {
     );
   }
 
+  async findByPeriod(dataInicio: Date, dataFim: Date, unidadeId?: string): Promise<MovimentacaoEstoque[]> {
+    const where: Record<string, unknown> = { dataHora: { gte: dataInicio, lte: dataFim } };
+    if (unidadeId) where.unidadeId = unidadeId;
+    const rows = await this.prisma.movimentacaoEstoqueModel.findMany({ where, orderBy: { dataHora: "asc" } });
+    return rows.map((row) =>
+      MovimentacaoEstoque.reconstitute(
+        row.id, row.unidadeId, row.vasilhameId, row.usuarioId, row.pedidoId,
+        row.tipoMovimentacao as TipoMovimentacao, row.quantidade, row.dataHora
+      )
+    );
+  }
+
   async findAll(): Promise<MovimentacaoEstoque[]> {
     const rows = await this.prisma.movimentacaoEstoqueModel.findMany({
       orderBy: { dataHora: "desc" },

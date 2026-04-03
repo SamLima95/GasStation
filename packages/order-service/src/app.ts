@@ -7,6 +7,7 @@ import {
   requestLoggingMiddleware,
   createErrorHandlerMiddleware,
   createHealthHandler,
+  apiVersionMiddleware,
 } from "@lframework/shared";
 import type { HttpErrorMapping } from "@lframework/shared";
 
@@ -32,6 +33,7 @@ export function createApp(container: OrderAppContainer, options: CreateAppOption
     else app.use(cors({ origin: origins, credentials: true }));
   }
   app.use(express.json({ limit: "512kb" }));
+  app.use(apiVersionMiddleware());
 
   if (options.baseUrl) {
     const openApiSpec = createOrderOpenApi(options.baseUrl);
@@ -39,6 +41,7 @@ export function createApp(container: OrderAppContainer, options: CreateAppOption
     app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec, { customSiteTitle: "Order Service API" }));
   }
 
+  app.use("/api/v1", container.orderRoutes);
   app.use("/api", container.orderRoutes);
   app.get("/health", createHealthHandler("order-service"));
 

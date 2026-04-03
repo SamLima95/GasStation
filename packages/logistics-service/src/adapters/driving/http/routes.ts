@@ -21,6 +21,7 @@ export function createLogisticsRoutes(
 
   r.get("/rotas", authMiddleware, asyncHandler(rotaCtrl.list.bind(rotaCtrl)));
   r.post("/rotas", authMiddleware, validateCreateRota, asyncHandler(rotaCtrl.create.bind(rotaCtrl)));
+  r.post("/rotas/:id/optimize", authMiddleware, asyncHandler(rotaCtrl.optimize.bind(rotaCtrl)));
 
   r.get("/entregas", authMiddleware, asyncHandler(entregaCtrl.list.bind(entregaCtrl)));
   r.patch("/entregas/:id/assign", authMiddleware, asyncHandler(entregaCtrl.assign.bind(entregaCtrl)));

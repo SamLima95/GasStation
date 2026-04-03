@@ -7,6 +7,7 @@ import {
   requestLoggingMiddleware,
   createErrorHandlerMiddleware,
   createHealthHandler,
+  apiVersionMiddleware,
 } from "@lframework/shared";
 
 export interface AppContainer {
@@ -28,6 +29,7 @@ export function createApp(container: AppContainer, options: CreateAppOptions = {
     app.use(cors({ origin: options.corsOrigin.split(",").map((s) => s.trim()), credentials: true }));
   }
   app.use(express.json({ limit: "512kb" }));
+  app.use(apiVersionMiddleware());
 
   if (options.baseUrl) {
     const openApiSpec = createAuditOpenApi(options.baseUrl);
@@ -35,6 +37,7 @@ export function createApp(container: AppContainer, options: CreateAppOptions = {
     app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec, { customSiteTitle: "Audit Service API" }));
   }
 
+  app.use("/api/v1", container.auditRoutes);
   app.use("/api", container.auditRoutes);
   app.get("/health", createHealthHandler("audit-service"));
   app.use(createErrorHandlerMiddleware());

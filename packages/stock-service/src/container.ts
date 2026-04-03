@@ -16,10 +16,12 @@ import { CreateMovimentacaoUseCase } from "./application/use-cases/create-movime
 import { ListMovimentacoesUseCase } from "./application/use-cases/list-movimentacoes.use-case";
 import { CreateComodatoUseCase } from "./application/use-cases/create-comodato.use-case";
 import { ListComodatosUseCase } from "./application/use-cases/list-comodatos.use-case";
+import { GenerateRelatorioAnpUseCase } from "./application/use-cases/generate-relatorio-anp.use-case";
 import { HandleUserCreatedUseCase } from "./application/use-cases/handle-user-created.use-case";
 import { VasilhameController } from "./adapters/driving/http/vasilhame.controller";
 import { MovimentacaoController } from "./adapters/driving/http/movimentacao.controller";
 import { ComodatoController } from "./adapters/driving/http/comodato.controller";
+import { RelatorioController } from "./adapters/driving/http/relatorio.controller";
 import { createStockRoutes } from "./adapters/driving/http/routes";
 import { mapApplicationErrorToHttp } from "./adapters/driving/http/error-to-http.mapper";
 
@@ -57,10 +59,12 @@ interface StockCradle {
   listMovimentacoesUseCase: ListMovimentacoesUseCase;
   createComodatoUseCase: CreateComodatoUseCase;
   listComodatosUseCase: ListComodatosUseCase;
+  generateRelatorioAnpUseCase: GenerateRelatorioAnpUseCase;
   handleUserCreatedUseCase: HandleUserCreatedUseCase;
   vasilhameController: VasilhameController;
   movimentacaoController: MovimentacaoController;
   comodatoController: ComodatoController;
+  relatorioController: RelatorioController;
   tokenVerifier: JwtTokenVerifier;
   authMiddleware: ReturnType<typeof createAuthMiddleware>;
   stockRoutes: ReturnType<typeof createStockRoutes>;
@@ -136,6 +140,9 @@ export function createContainer(config: StockContainerConfig) {
       (cradle: StockCradle) =>
         new ListComodatosUseCase(cradle.comodatoRepository)
     ).singleton(),
+    generateRelatorioAnpUseCase: asFunction(
+      (cradle: StockCradle) => new GenerateRelatorioAnpUseCase(cradle.movimentacaoRepository)
+    ).singleton(),
     handleUserCreatedUseCase: asFunction(
       (cradle: StockCradle) =>
         new HandleUserCreatedUseCase(cradle.replicatedUserStore, cradle.cache)
@@ -153,6 +160,9 @@ export function createContainer(config: StockContainerConfig) {
       (cradle: StockCradle) =>
         new ComodatoController(cradle.createComodatoUseCase, cradle.listComodatosUseCase)
     ).singleton(),
+    relatorioController: asFunction(
+      (cradle: StockCradle) => new RelatorioController(cradle.generateRelatorioAnpUseCase)
+    ).singleton(),
 
     tokenVerifier: asFunction(({ config }: { config: StockContainerConfig }) => {
       return new JwtTokenVerifier(config.jwtSecret);
@@ -168,13 +178,15 @@ export function createContainer(config: StockContainerConfig) {
         vasilhameController,
         movimentacaoController,
         comodatoController,
+        relatorioController,
         authMiddleware,
       }: {
         vasilhameController: VasilhameController;
         movimentacaoController: MovimentacaoController;
         comodatoController: ComodatoController;
+        relatorioController: RelatorioController;
         authMiddleware: ReturnType<typeof createAuthMiddleware>;
-      }) => createStockRoutes(vasilhameController, movimentacaoController, comodatoController, authMiddleware)
+      }) => createStockRoutes(vasilhameController, movimentacaoController, comodatoController, relatorioController, authMiddleware)
     ).singleton(),
 
     eventConsumer: asFunction(

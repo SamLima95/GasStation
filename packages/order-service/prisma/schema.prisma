@@ -48,6 +48,7 @@ model PedidoModel {
 
   cliente              ClienteModel  @relation(fields: [clienteId], references: [id])
   itens                ItemPedidoModel[]
+  notasFiscais         NotaFiscalModel[]
 
   @@map("pedidos")
 }
@@ -62,6 +63,27 @@ model ItemPedidoModel {
   pedido          PedidoModel @relation(fields: [pedidoId], references: [id])
 
   @@map("itens_pedido")
+}
+
+enum StatusNotaFiscal {
+  PENDENTE
+  AUTORIZADA
+  REJEITADA
+  FALHA
+}
+
+model NotaFiscalModel {
+  id           String            @id @default(uuid())
+  pedidoId     String            @map("pedido_id")
+  chaveAcesso  String?           @map("chave_acesso")
+  status       StatusNotaFiscal  @default(PENDENTE)
+  tentativas   Int               @default(0)
+  mensagem     String?
+  createdAt    DateTime          @map("created_at") @default(now())
+
+  pedido       PedidoModel       @relation(fields: [pedidoId], references: [id])
+
+  @@map("notas_fiscais")
 }
 
 model ReplicatedUserModel {

@@ -3,6 +3,7 @@ import { asyncHandler } from "@lframework/shared";
 import { VasilhameController } from "./vasilhame.controller";
 import { MovimentacaoController } from "./movimentacao.controller";
 import { ComodatoController } from "./comodato.controller";
+import { RelatorioController } from "./relatorio.controller";
 import { validateCreateVasilhame } from "./vasilhame.validation";
 import { validateCreateMovimentacao } from "./movimentacao.validation";
 import { validateCreateComodato } from "./comodato.validation";
@@ -16,6 +17,7 @@ export function createStockRoutes(
   vasilhameController: VasilhameController,
   movimentacaoController: MovimentacaoController,
   comodatoController: ComodatoController,
+  relatorioController: RelatorioController,
   authMiddleware: (req: Request, res: Response, next: NextFunction) => void
 ): Router {
   const router = Router();
@@ -31,6 +33,9 @@ export function createStockRoutes(
   // Comodatos
   router.get("/comodatos", authMiddleware, asyncHandler(comodatoController.list.bind(comodatoController)));
   router.post("/comodatos", authMiddleware, validateCreateComodato, asyncHandler(comodatoController.create.bind(comodatoController)));
+
+  // Relatórios
+  router.get("/relatorios/anp", authMiddleware, asyncHandler(relatorioController.generateAnp.bind(relatorioController)));
 
   return router;
 }
