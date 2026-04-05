@@ -55,5 +55,18 @@ const Api = (() => {
     return data;
   }
 
-  return { getToken, setToken, clearToken, getUser, setUser, apiFetch, login };
+  async function register(name, email, password) {
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || data.message || "Falha no registro");
+    setToken(data.accessToken);
+    if (data.user) setUser(data.user);
+    return data;
+  }
+
+  return { getToken, setToken, clearToken, getUser, setUser, apiFetch, login, register };
 })();

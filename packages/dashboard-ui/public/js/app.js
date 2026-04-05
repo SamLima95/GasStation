@@ -8,6 +8,13 @@ const App = (() => {
 
   const pages = {
     dashboard: Dashboard,
+    catalog: Catalog,
+    clientes: Clientes,
+    pedidos: Pedidos,
+    financeiro: Financeiro,
+    estoque: Estoque,
+    logistica: Logistica,
+    auditoria: Auditoria,
     health: Health,
   };
 

@@ -18,7 +18,7 @@
     "dev:dashboard": "pnpm --filter dashboard-service run dev",
     "dev:api-docs": "pnpm --filter api-docs run dev",
     "dev:dashboard-ui": "pnpm --filter dashboard-ui run dev",
-    "dev": "pnpm run dev:identity & pnpm run dev:catalog & pnpm run dev:stock & pnpm run dev:order & pnpm run dev:financial & pnpm run dev:logistics & pnpm run dev:audit & pnpm run dev:dashboard & pnpm run dev:api-docs & pnpm run dev:dashboard-ui",
+    "dev": "bash scripts/dev.sh",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:fresh": "docker compose down -v && docker compose up -d",

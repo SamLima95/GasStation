@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LFramework — Dashboard</title>
+  <title>GasStation — Dashboard</title>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
@@ -12,8 +12,15 @@
     <div class="login-card">
       <div class="login-logo">
         <span class="logo-icon">&#9981;</span>
-        <h1>LFramework</h1>
+        <h1>GasStation</h1>
       </div>
+      <div class="demo-credentials">
+        <div class="demo-title">Credenciais de demonstracao</div>
+        <div class="demo-row"><span class="demo-label">Email:</span> <span class="demo-value" id="demo-email">admin@gasstation.com</span></div>
+        <div class="demo-row"><span class="demo-label">Senha:</span> <span class="demo-value" id="demo-pass">Admin123!</span></div>
+        <button type="button" class="btn-demo" id="demo-btn">Entrar com conta demo</button>
+      </div>
+      <div class="demo-divider"><span>ou entre manualmente</span></div>
       <form id="login-form">
         <div class="form-group">
           <label for="login-email">Email</label>
@@ -34,12 +41,40 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <span class="logo-icon">&#9981;</span>
-        <span class="sidebar-title">LFramework</span>
+        <span class="sidebar-title">GasStation</span>
       </div>
       <nav class="sidebar-nav">
         <a href="#/dashboard" class="nav-item active" data-page="dashboard">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
           Dashboard
+        </a>
+        <a href="#/catalog" class="nav-item" data-page="catalog">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          Catalogo
+        </a>
+        <a href="#/clientes" class="nav-item" data-page="clientes">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          Clientes
+        </a>
+        <a href="#/pedidos" class="nav-item" data-page="pedidos">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Pedidos
+        </a>
+        <a href="#/financeiro" class="nav-item" data-page="financeiro">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          Financeiro
+        </a>
+        <a href="#/estoque" class="nav-item" data-page="estoque">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          Estoque
+        </a>
+        <a href="#/logistica" class="nav-item" data-page="logistica">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          Logistica
+        </a>
+        <a href="#/auditoria" class="nav-item" data-page="auditoria">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Auditoria
         </a>
         <a href="#/health" class="nav-item" data-page="health">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
@@ -61,6 +96,13 @@
   <script src="/js/api.js"></script>
   <script src="/js/login.js"></script>
   <script src="/js/dashboard.js"></script>
+  <script src="/js/catalog.js"></script>
+  <script src="/js/clientes.js"></script>
+  <script src="/js/pedidos.js"></script>
+  <script src="/js/financeiro.js"></script>
+  <script src="/js/estoque.js"></script>
+  <script src="/js/logistica.js"></script>
+  <script src="/js/auditoria.js"></script>
   <script src="/js/health.js"></script>
   <script src="/js/app.js"></script>
 </body>
