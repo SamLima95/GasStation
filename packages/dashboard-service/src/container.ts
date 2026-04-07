@@ -4,7 +4,9 @@ import { RedisCacheAdapter, createAuthMiddleware, JwtTokenVerifier } from "@lfra
 import type { ICacheService } from "@lframework/shared";
 import { InternalServiceClientAdapter } from "./adapters/driven/http-client/internal-service-client.adapter";
 import { GetDashboardUseCase } from "./application/use-cases/get-dashboard.use-case";
+import { ExportDashboardUseCase } from "./application/use-cases/export-dashboard.use-case";
 import { DashboardController } from "./adapters/driving/http/dashboard.controller";
+import { ExportController } from "./adapters/driving/http/export.controller";
 import { createDashboardRoutes } from "./adapters/driving/http/routes";
 
 export interface DashboardContainerConfig {
@@ -20,7 +22,9 @@ interface DashboardCradle {
   cache: ICacheService;
   serviceClient: InternalServiceClientAdapter;
   getDashboardUseCase: GetDashboardUseCase;
+  exportDashboardUseCase: ExportDashboardUseCase;
   dashboardController: DashboardController;
+  exportController: ExportController;
   authMiddleware: ReturnType<typeof createAuthMiddleware>;
   dashboardRoutes: ReturnType<typeof createDashboardRoutes>;
 }
@@ -47,8 +51,16 @@ export function createContainer(config: DashboardContainerConfig) {
       new GetDashboardUseCase(cradle.serviceClient, cradle.cache)
     ).singleton(),
 
+    exportDashboardUseCase: asFunction((cradle: DashboardCradle) =>
+      new ExportDashboardUseCase(cradle.getDashboardUseCase)
+    ).singleton(),
+
     dashboardController: asFunction((cradle: DashboardCradle) =>
       new DashboardController(cradle.getDashboardUseCase)
+    ).singleton(),
+
+    exportController: asFunction((cradle: DashboardCradle) =>
+      new ExportController(cradle.exportDashboardUseCase)
     ).singleton(),
 
     authMiddleware: asFunction(({ config }: { config: DashboardContainerConfig }) => {
@@ -57,7 +69,7 @@ export function createContainer(config: DashboardContainerConfig) {
     }).singleton(),
 
     dashboardRoutes: asFunction((cradle: DashboardCradle) =>
-      createDashboardRoutes(cradle.dashboardController, cradle.authMiddleware)
+      createDashboardRoutes(cradle.dashboardController, cradle.exportController, cradle.authMiddleware)
     ).singleton(),
   });
 

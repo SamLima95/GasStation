@@ -1,4 +1,5 @@
 import path from "path";
+import fs from "fs";
 import { config as loadEnv } from "dotenv";
 
 loadEnv({ path: path.resolve(process.cwd(), ".env") });
@@ -12,11 +13,16 @@ const app = express();
 
 app.use(express.json());
 app.use(proxyRoutes);
-app.use(express.static(path.join(__dirname, "../public")));
+
+const clientDist = path.join(__dirname, "../dist/client");
+const publicDir = path.join(__dirname, "../public");
+const staticDir = fs.existsSync(clientDist) ? clientDist : publicDir;
+
+app.use(express.static(staticDir));
 
 // SPA fallback
 app.get("*", (_req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html"));
+  res.sendFile(path.join(staticDir, "index.html"));
 });
 
 app.listen(config.port, () => {

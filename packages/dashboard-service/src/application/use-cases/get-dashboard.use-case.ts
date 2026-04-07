@@ -10,18 +10,18 @@ export class GetDashboardUseCase {
     private readonly cache: ICacheService
   ) {}
 
-  async execute(filter: DashboardFilterDto): Promise<DashboardDto> {
+  async execute(filter: DashboardFilterDto, authHeader?: string): Promise<DashboardDto> {
     const cacheKey = `dashboard:${filter.unidadeId ?? "all"}:${filter.dataInicio ?? ""}:${filter.dataFim ?? ""}`;
     const cached = await this.cache.get<DashboardDto>(cacheKey);
     if (cached) return cached;
 
     const [pedidos, movimentacoes, caixas, contas, rotas, entregas] = await Promise.all([
-      this.serviceClient.fetchPedidos(filter.unidadeId),
-      this.serviceClient.fetchMovimentacoes(filter.unidadeId),
-      this.serviceClient.fetchCaixas(filter.unidadeId),
-      this.serviceClient.fetchContasAReceber(filter.unidadeId),
-      this.serviceClient.fetchRotas(filter.unidadeId),
-      this.serviceClient.fetchEntregas(filter.unidadeId),
+      this.serviceClient.fetchPedidos(filter.unidadeId, authHeader, filter.dataInicio, filter.dataFim),
+      this.serviceClient.fetchMovimentacoes(filter.unidadeId, authHeader, filter.dataInicio, filter.dataFim),
+      this.serviceClient.fetchCaixas(filter.unidadeId, authHeader, filter.dataInicio, filter.dataFim),
+      this.serviceClient.fetchContasAReceber(filter.unidadeId, authHeader, filter.dataInicio, filter.dataFim),
+      this.serviceClient.fetchRotas(filter.unidadeId, authHeader, filter.dataInicio, filter.dataFim),
+      this.serviceClient.fetchEntregas(filter.unidadeId, authHeader, filter.dataInicio, filter.dataFim),
     ]);
 
     const resumo = this.calcResumo(pedidos);

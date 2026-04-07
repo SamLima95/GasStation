@@ -4,20 +4,20 @@
  */
 export interface IServiceClient {
   /** Busca pedidos do order-service */
-  fetchPedidos(unidadeId?: string): Promise<Array<{ status: string; valorTotal: number }>>;
+  fetchPedidos(unidadeId?: string, authHeader?: string, dataInicio?: string, dataFim?: string): Promise<Array<{ status: string; valorTotal: number }>>;
 
   /** Busca movimentações do stock-service */
-  fetchMovimentacoes(unidadeId?: string): Promise<Array<{ tipoMovimentacao: string; quantidade: number }>>;
+  fetchMovimentacoes(unidadeId?: string, authHeader?: string, dataInicio?: string, dataFim?: string): Promise<Array<{ tipoMovimentacao: string; quantidade: number }>>;
 
   /** Busca caixas do financial-service */
-  fetchCaixas(unidadeId?: string): Promise<Array<{ status: string }>>;
+  fetchCaixas(unidadeId?: string, authHeader?: string, dataInicio?: string, dataFim?: string): Promise<Array<{ status: string }>>;
 
   /** Busca contas a receber do financial-service */
-  fetchContasAReceber(unidadeId?: string): Promise<Array<{ status: string; valorAberto: number }>>;
+  fetchContasAReceber(unidadeId?: string, authHeader?: string, dataInicio?: string, dataFim?: string): Promise<Array<{ status: string; valorAberto: number }>>;
 
   /** Busca rotas do logistics-service */
-  fetchRotas(unidadeId?: string): Promise<Array<{ status: string }>>;
+  fetchRotas(unidadeId?: string, authHeader?: string, dataInicio?: string, dataFim?: string): Promise<Array<{ status: string }>>;
 
   /** Busca entregas do logistics-service */
-  fetchEntregas(unidadeId?: string): Promise<Array<{ status: string }>>;
+  fetchEntregas(unidadeId?: string, authHeader?: string, dataInicio?: string, dataFim?: string): Promise<Array<{ status: string }>>;
 }

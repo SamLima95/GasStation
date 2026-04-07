@@ -13,37 +13,42 @@ export class InternalServiceClientAdapter implements IServiceClient {
     logistics: string;
   }) {}
 
-  async fetchPedidos(unidadeId?: string): Promise<Array<{ status: string; valorTotal: number }>> {
-    return this.fetchJson(this.serviceUrls.order, "/api/v1/pedidos", unidadeId);
+  async fetchPedidos(unidadeId?: string, authHeader?: string, dataInicio?: string, dataFim?: string): Promise<Array<{ status: string; valorTotal: number }>> {
+    return this.fetchJson(this.serviceUrls.order, "/api/v1/pedidos", unidadeId, authHeader, dataInicio, dataFim);
   }
 
-  async fetchMovimentacoes(unidadeId?: string): Promise<Array<{ tipoMovimentacao: string; quantidade: number }>> {
-    return this.fetchJson(this.serviceUrls.stock, "/api/v1/movimentacoes", unidadeId);
+  async fetchMovimentacoes(unidadeId?: string, authHeader?: string, dataInicio?: string, dataFim?: string): Promise<Array<{ tipoMovimentacao: string; quantidade: number }>> {
+    return this.fetchJson(this.serviceUrls.stock, "/api/v1/movimentacoes", unidadeId, authHeader, dataInicio, dataFim);
   }
 
-  async fetchCaixas(unidadeId?: string): Promise<Array<{ status: string }>> {
-    return this.fetchJson(this.serviceUrls.financial, "/api/v1/caixas", unidadeId);
+  async fetchCaixas(unidadeId?: string, authHeader?: string, dataInicio?: string, dataFim?: string): Promise<Array<{ status: string }>> {
+    return this.fetchJson(this.serviceUrls.financial, "/api/v1/caixas", unidadeId, authHeader, dataInicio, dataFim);
   }
 
-  async fetchContasAReceber(unidadeId?: string): Promise<Array<{ status: string; valorAberto: number }>> {
-    return this.fetchJson(this.serviceUrls.financial, "/api/v1/contas-a-receber", unidadeId);
+  async fetchContasAReceber(unidadeId?: string, authHeader?: string, dataInicio?: string, dataFim?: string): Promise<Array<{ status: string; valorAberto: number }>> {
+    return this.fetchJson(this.serviceUrls.financial, "/api/v1/contas-a-receber", unidadeId, authHeader, dataInicio, dataFim);
   }
 
-  async fetchRotas(unidadeId?: string): Promise<Array<{ status: string }>> {
-    return this.fetchJson(this.serviceUrls.logistics, "/api/v1/rotas", unidadeId);
+  async fetchRotas(unidadeId?: string, authHeader?: string, dataInicio?: string, dataFim?: string): Promise<Array<{ status: string }>> {
+    return this.fetchJson(this.serviceUrls.logistics, "/api/v1/rotas", unidadeId, authHeader, dataInicio, dataFim);
   }
 
-  async fetchEntregas(unidadeId?: string): Promise<Array<{ status: string }>> {
-    return this.fetchJson(this.serviceUrls.logistics, "/api/v1/entregas", unidadeId);
+  async fetchEntregas(unidadeId?: string, authHeader?: string, dataInicio?: string, dataFim?: string): Promise<Array<{ status: string }>> {
+    return this.fetchJson(this.serviceUrls.logistics, "/api/v1/entregas", unidadeId, authHeader, dataInicio, dataFim);
   }
 
-  private async fetchJson<T>(baseUrl: string, path: string, unidadeId?: string): Promise<T[]> {
+  private async fetchJson<T>(baseUrl: string, path: string, unidadeId?: string, authHeader?: string, dataInicio?: string, dataFim?: string): Promise<T[]> {
     const url = new URL(path, baseUrl);
     if (unidadeId) url.searchParams.set("unidadeId", unidadeId);
+    if (dataInicio) url.searchParams.set("dataInicio", dataInicio);
+    if (dataFim) url.searchParams.set("dataFim", dataFim);
+
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (authHeader) headers["authorization"] = authHeader;
 
     try {
       const res = await fetch(url.toString(), {
-        headers: { "Content-Type": "application/json" },
+        headers,
         signal: AbortSignal.timeout(5000),
       });
       if (!res.ok) {

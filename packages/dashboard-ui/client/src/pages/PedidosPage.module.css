@@ -1,0 +1,75 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.formFields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.itensSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.itensSectionTitle {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.itemRow {
+  display: grid;
+  grid-template-columns: 1fr 100px 120px auto;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.removeItemBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  color: var(--color-danger, #dc2626);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
+  margin-bottom: var(--space-1);
+}
+
+.removeItemBtn:hover {
+  background: var(--color-danger-bg, #fef2f2);
+}
+
+.totalRow {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.totalLabel {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.totalValue {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}

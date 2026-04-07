@@ -53,6 +53,44 @@ registry.registerPath({
   },
 });
 
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/dashboard/export/csv",
+  summary: "Exportar dashboard em CSV",
+  tags: ["Dashboard"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    query: z.object({
+      unidadeId: z.string().optional(),
+      dataInicio: z.string().optional(),
+      dataFim: z.string().optional(),
+    }),
+  },
+  responses: {
+    200: { description: "Arquivo CSV", content: { "text/csv": { schema: z.string() } } },
+    401: { description: "Não autenticado", content: { "application/json": { schema: ErrorSchema } } },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/dashboard/export/pdf",
+  summary: "Exportar dashboard em PDF",
+  tags: ["Dashboard"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    query: z.object({
+      unidadeId: z.string().optional(),
+      dataInicio: z.string().optional(),
+      dataFim: z.string().optional(),
+    }),
+  },
+  responses: {
+    200: { description: "Arquivo PDF", content: { "application/pdf": { schema: z.string() } } },
+    401: { description: "Não autenticado", content: { "application/json": { schema: ErrorSchema } } },
+  },
+});
+
 export function createDashboardOpenApi(serverUrl: string): object {
   const generator = new OpenApiGeneratorV3(registry.definitions);
   const doc = generator.generateDocument({

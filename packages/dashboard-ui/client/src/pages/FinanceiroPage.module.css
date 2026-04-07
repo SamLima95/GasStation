@@ -1,0 +1,28 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.tabContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.formFields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.actionCell {
+  display: flex;
+  gap: var(--space-2);
+}
