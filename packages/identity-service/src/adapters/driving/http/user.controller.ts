@@ -6,6 +6,7 @@ import { UpdateUserUseCase } from "../../../application/use-cases/update-user.us
 import { DeactivateUserUseCase } from "../../../application/use-cases/deactivate-user.use-case";
 import type { CreateUserDto } from "../../../application/dtos/create-user.dto";
 import type { UpdateUserDto } from "../../../application/dtos/update-user.dto";
+import type { IAuditLogger } from "../../../application/ports/audit-logger.port";
 import type { AuthenticatedRequest } from "@lframework/shared";
 import { sendError } from "@lframework/shared";
 
@@ -20,7 +21,8 @@ export class UserController {
     private readonly createUserUseCase: CreateUserUseCase,
     private readonly getUserByIdUseCase: GetUserByIdUseCase,
     private readonly updateUserUseCase: UpdateUserUseCase,
-    private readonly deactivateUserUseCase: DeactivateUserUseCase
+    private readonly deactivateUserUseCase: DeactivateUserUseCase,
+    private readonly auditLogger: IAuditLogger
   ) {}
 
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -28,6 +30,14 @@ export class UserController {
       const authReq = req as AuthenticatedRequest;
       const dto: CreateUserDto = authReq.body;
       const result = await this.createUserUseCase.execute(dto);
+      await this.auditLogger.log({
+        entidade: "User",
+        entidadeId: result.id,
+        acao: "user.created",
+        usuarioId: authReq.userId,
+        unidadeId: null,
+        detalhes: { email: result.email, name: result.name },
+      });
       res.status(201).json(result);
     } catch (err) {
       next(err);
@@ -70,6 +80,14 @@ export class UserController {
       }
 
       const user = await this.updateUserUseCase.execute(parsed.data, authReq.body as UpdateUserDto);
+      await this.auditLogger.log({
+        entidade: "User",
+        entidadeId: user.id,
+        acao: "user.updated",
+        usuarioId: authReq.userId,
+        unidadeId: null,
+        detalhes: { fields: Object.keys(authReq.body ?? {}) },
+      });
       res.json(user);
     } catch (err) {
       next(err);
@@ -87,6 +105,14 @@ export class UserController {
       }
 
       await this.deactivateUserUseCase.execute(parsed.data);
+      await this.auditLogger.log({
+        entidade: "User",
+        entidadeId: parsed.data,
+        acao: "user.deactivated",
+        usuarioId: authReq.userId,
+        unidadeId: null,
+        detalhes: null,
+      });
       res.status(204).send();
     } catch (err) {
       next(err);

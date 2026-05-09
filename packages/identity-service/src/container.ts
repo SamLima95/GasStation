@@ -12,8 +12,10 @@ import { PrismaUnidadeRepository } from "./adapters/driven/persistence/prisma-un
 import { PrismaUsuarioUnidadeRepository } from "./adapters/driven/persistence/prisma-usuario-unidade.repository";
 import { PrismaConfiguracaoUnidadeRepository } from "./adapters/driven/persistence/prisma-configuracao-unidade.repository";
 import { RabbitMqEventPublisherAdapter } from "./adapters/driven/messaging/rabbitmq-event-publisher.adapter";
+import { AuditLoggerAdapter } from "./adapters/driven/audit/audit-logger.adapter";
 import { OutboxRelayAdapter } from "./adapters/driven/messaging/outbox-relay.adapter";
 import type { IEventPublisher } from "./application/ports/event-publisher.port";
+import type { IAuditLogger } from "./application/ports/audit-logger.port";
 import { UserCreatedNotifierAdapter } from "./adapters/driven/notifiers/user-created-notifier.adapter";
 import { JwtTokenService } from "./adapters/driven/auth/jwt-token.service";
 import { Argon2PasswordHasher } from "./adapters/driven/auth/argon2-password-hasher";
@@ -85,6 +87,7 @@ interface IdentityCradle {
   usuarioUnidadeRepository: PrismaUsuarioUnidadeRepository;
   configuracaoUnidadeRepository: PrismaConfiguracaoUnidadeRepository;
   eventPublisher: IEventPublisher & { connect?: () => Promise<void>; disconnect?: () => Promise<void> };
+  auditLogger: IAuditLogger;
   tokenService: JwtTokenService;
   passwordHasher: Argon2PasswordHasher;
   googleProvider: IOAuthProvider | null;
@@ -187,6 +190,10 @@ export function createContainer(config: ContainerConfig) {
     outboxRelay: asFunction(
       (cradle: IdentityCradle) =>
         new OutboxRelayAdapter(cradle.prisma, cradle.eventPublisher)
+    ).singleton(),
+
+    auditLogger: asFunction(
+      (cradle: IdentityCradle) => new AuditLoggerAdapter(cradle.eventPublisher)
     ).singleton(),
 
     tokenService: asFunction(({ config }: { config: ContainerConfig }) => {
@@ -331,7 +338,8 @@ export function createContainer(config: ContainerConfig) {
           cradle.createUserUseCase,
           cradle.getUserByIdUseCase,
           cradle.updateUserUseCase,
-          cradle.deactivateUserUseCase
+          cradle.deactivateUserUseCase,
+          cradle.auditLogger
         )
     ).singleton(),
 
@@ -345,6 +353,7 @@ export function createContainer(config: ContainerConfig) {
           cradle.requestPasswordResetUseCase,
           cradle.resetPasswordUseCase,
           cradle.logoutUseCase,
+          cradle.auditLogger,
           cradle.googleProvider,
           cradle.githubProvider,
           cradle.baseUrl,
@@ -402,10 +411,12 @@ export function createContainer(config: ContainerConfig) {
       ({
         unidadeController,
         authMiddleware,
+        listRolePermissionsUseCase,
       }: {
         unidadeController: UnidadeController;
         authMiddleware: ReturnType<typeof createAuthMiddleware>;
-      }) => createUnidadeRoutes(unidadeController, authMiddleware)
+        listRolePermissionsUseCase: ListRolePermissionsUseCase;
+      }) => createUnidadeRoutes(unidadeController, authMiddleware, listRolePermissionsUseCase)
     ).singleton(),
   });
 

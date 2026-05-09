@@ -1,5 +1,7 @@
 import express, { type Express, type Router } from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import swaggerUi from "swagger-ui-express";
 import { createLogisticsOpenApi } from "./openapi";
 import { requestIdMiddleware, requestLoggingMiddleware, createErrorHandlerMiddleware, createHealthHandler, apiVersionMiddleware } from "@lframework/shared";
@@ -12,6 +14,15 @@ export interface LogisticsAppContainer {
 
 export function createApp(container: LogisticsAppContainer, options: { corsOrigin?: string; baseUrl?: string } = {}): Express {
   const app = express();
+  app.set("trust proxy", 1);
+  app.use(helmet({ contentSecurityPolicy: false }));
+  app.use(rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => req.path === "/health",
+  }));
   app.use(requestIdMiddleware); app.use(requestLoggingMiddleware);
   if (options.corsOrigin) { const o = options.corsOrigin.split(",").map(s => s.trim()).filter(Boolean); if (o.length === 1 && o[0] === "*") app.use(cors({ origin: "*" })); else app.use(cors({ origin: o, credentials: true })); }
   app.use(express.json({ limit: "512kb" }));

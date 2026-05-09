@@ -7,6 +7,7 @@ import type { OAuthCallbackUseCase } from "../../../application/use-cases/oauth-
 import type { RequestPasswordResetUseCase } from "../../../application/use-cases/request-password-reset.use-case";
 import type { ResetPasswordUseCase } from "../../../application/use-cases/reset-password.use-case";
 import type { LogoutUseCase } from "../../../application/use-cases/logout.use-case";
+import type { IAuditLogger } from "../../../application/ports/audit-logger.port";
 import type { IOAuthProvider } from "../../../application/ports/oauth-provider.port";
 import type { ICacheService } from "@lframework/shared";
 import type { RegisterDto } from "../../../application/dtos/register.dto";
@@ -31,6 +32,7 @@ export class AuthController {
     private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
     private readonly logoutUseCase: LogoutUseCase,
+    private readonly auditLogger: IAuditLogger,
     private readonly googleProvider: IOAuthProvider | null,
     private readonly githubProvider: IOAuthProvider | null,
     private readonly baseUrl: string,
@@ -57,6 +59,14 @@ export class AuthController {
     try {
       const dto: LoginDto = req.body;
       const result = await this.loginUseCase.execute(dto);
+      await this.auditLogger.log({
+        entidade: "User",
+        entidadeId: result.user.id,
+        acao: "auth.login.success",
+        usuarioId: result.user.id,
+        unidadeId: null,
+        detalhes: { email: result.user.email },
+      });
       const body: AuthResponseDto = {
         user: result.user,
         accessToken: result.accessToken,
@@ -64,6 +74,15 @@ export class AuthController {
       };
       res.status(200).json(body);
     } catch (err) {
+      const dto: Partial<LoginDto> = req.body ?? {};
+      await this.auditLogger.log({
+        entidade: "User",
+        entidadeId: typeof dto.email === "string" ? dto.email : "unknown",
+        acao: "auth.login.failed",
+        usuarioId: null,
+        unidadeId: null,
+        detalhes: { email: dto.email ?? null },
+      });
       next(err);
     }
   };
@@ -86,6 +105,14 @@ export class AuthController {
     try {
       const dto: ForgotPasswordDto = req.body;
       const result = await this.requestPasswordResetUseCase.execute(dto);
+      await this.auditLogger.log({
+        entidade: "User",
+        entidadeId: dto.email,
+        acao: "auth.password_reset.requested",
+        usuarioId: null,
+        unidadeId: null,
+        detalhes: { email: dto.email },
+      });
       res.status(202).json(result);
     } catch (err) {
       next(err);
@@ -96,6 +123,14 @@ export class AuthController {
     try {
       const dto: ResetPasswordDto = req.body;
       await this.resetPasswordUseCase.execute(dto);
+      await this.auditLogger.log({
+        entidade: "User",
+        entidadeId: "password-reset-token",
+        acao: "auth.password_reset.completed",
+        usuarioId: null,
+        unidadeId: null,
+        detalhes: null,
+      });
       res.status(204).send();
     } catch (err) {
       next(err);
@@ -108,6 +143,14 @@ export class AuthController {
       await this.logoutUseCase.execute({
         jti: authReq.userTokenId,
         exp: authReq.userTokenExpiresAt,
+      });
+      await this.auditLogger.log({
+        entidade: "User",
+        entidadeId: authReq.userId,
+        acao: "auth.logout",
+        usuarioId: authReq.userId,
+        unidadeId: null,
+        detalhes: { jti: authReq.userTokenId ?? null },
       });
       res.status(204).send();
     } catch (err) {

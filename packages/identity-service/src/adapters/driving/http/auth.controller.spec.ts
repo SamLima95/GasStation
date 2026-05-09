@@ -9,6 +9,7 @@ import type { OAuthCallbackUseCase } from "../../../application/use-cases/oauth-
 import type { RequestPasswordResetUseCase } from "../../../application/use-cases/request-password-reset.use-case";
 import type { ResetPasswordUseCase } from "../../../application/use-cases/reset-password.use-case";
 import type { LogoutUseCase } from "../../../application/use-cases/logout.use-case";
+import type { IAuditLogger } from "../../../application/ports/audit-logger.port";
 import type { IOAuthProvider } from "../../../application/ports/oauth-provider.port";
 import type { ICacheService } from "@lframework/shared";
 import {
@@ -29,6 +30,7 @@ describe("AuthController", () => {
   let requestPasswordResetUseCase: RequestPasswordResetUseCase;
   let resetPasswordUseCase: ResetPasswordUseCase;
   let logoutUseCase: LogoutUseCase;
+  let auditLogger: IAuditLogger;
   let googleProvider: IOAuthProvider | null;
   let githubProvider: IOAuthProvider | null;
   let cache: ICacheService;
@@ -58,6 +60,7 @@ describe("AuthController", () => {
     requestPasswordResetUseCase = { execute: vi.fn() } as unknown as RequestPasswordResetUseCase;
     resetPasswordUseCase = { execute: vi.fn() } as unknown as ResetPasswordUseCase;
     logoutUseCase = { execute: vi.fn() } as unknown as LogoutUseCase;
+    auditLogger = { log: vi.fn().mockResolvedValue(undefined) };
     googleProvider = null;
     githubProvider = null;
     cache = {
@@ -81,6 +84,7 @@ describe("AuthController", () => {
       requestPasswordResetUseCase,
       resetPasswordUseCase,
       logoutUseCase,
+      auditLogger,
       googleProvider,
       githubProvider,
       baseUrl,
@@ -236,6 +240,7 @@ describe("AuthController", () => {
         requestPasswordResetUseCase,
         resetPasswordUseCase,
         logoutUseCase,
+        auditLogger,
         mockProvider,
         githubProvider,
         baseUrl,
@@ -293,6 +298,7 @@ describe("AuthController", () => {
         requestPasswordResetUseCase,
         resetPasswordUseCase,
         logoutUseCase,
+        auditLogger,
         mockProvider,
         githubProvider,
         baseUrl,
@@ -326,6 +332,7 @@ describe("AuthController", () => {
         requestPasswordResetUseCase,
         resetPasswordUseCase,
         logoutUseCase,
+        auditLogger,
         mockProvider,
         githubProvider,
         baseUrl,
@@ -361,6 +368,7 @@ describe("AuthController", () => {
         requestPasswordResetUseCase,
         resetPasswordUseCase,
         logoutUseCase,
+        auditLogger,
         mockProvider,
         githubProvider,
         baseUrl,

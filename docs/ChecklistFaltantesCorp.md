@@ -9,7 +9,7 @@ Checklist baseado na comparacao entre `docs/RequisitosCorp.md` e o estado atual 
 - [x] Implementar recuperacao de senha.
 - [x] Implementar logout server-side ou revogacao antecipada de tokens.
 - [ ] Implementar controle de sessoes com timeout, refresh token e revogacao.
-- [ ] Registrar logs de login, logout, falhas de autenticacao e alteracoes de usuario.
+- [x] Registrar logs de login, logout, falhas de autenticacao e alteracoes de usuario.
 
 ## 2. Controle de Acesso
 
@@ -17,14 +17,15 @@ Checklist baseado na comparacao entre `docs/RequisitosCorp.md` e o estado atual 
 - [x] Criar middleware `requirePermission` para autorizacao por permissao.
 - [x] Criar matriz de perfis e permissoes por modulo.
 - [x] Persistir permissoes em banco de dados.
-- [ ] Aplicar autorizacao por permissao nos endpoints sensiveis de todos os servicos.
+- [x] Aplicar autorizacao por permissao nos endpoints sensiveis de todos os servicos.
+- [x] Aplicar autorizacao por permissao nos endpoints sensiveis do identity-service.
 - [x] Criar testes para acesso permitido e negado por perfil.
 - [ ] Auditar tentativas de acesso negadas.
 
 ## 3. Auditoria e Rastreamento
 
 - [ ] Garantir auditoria automatica para acoes criticas em todos os servicos.
-- [ ] Auditar criacao, alteracao e exclusao/desativacao de cadastros.
+- [x] Auditar criacao, alteracao e exclusao/desativacao de cadastros no identity-service.
 - [ ] Auditar movimentacoes de estoque, pedidos, financeiro, logistica e configuracoes.
 - [ ] Implementar historico de alteracoes por entidade.
 - [ ] Implementar versionamento de dados ou snapshots para entidades criticas.
@@ -47,8 +48,8 @@ Checklist baseado na comparacao entre `docs/RequisitosCorp.md` e o estado atual 
 - [ ] Implementar backup automatizado dos bancos.
 - [ ] Documentar estrategia de restore.
 - [ ] Testar restauracao de backup.
-- [ ] Aplicar rate limiting global ou por grupo de endpoints sensiveis.
-- [ ] Adicionar headers de seguranca HTTP, como Helmet/CSP, quando aplicavel.
+- [x] Aplicar rate limiting global ou por grupo de endpoints sensiveis.
+- [x] Adicionar headers de seguranca HTTP, como Helmet/CSP, quando aplicavel.
 - [ ] Revisar protecao contra XSS no front-end.
 - [ ] Criar testes de seguranca basicos para autenticacao, autorizacao e validacao de entrada.
 

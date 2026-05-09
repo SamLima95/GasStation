@@ -1,5 +1,7 @@
 import express, { type Express, type Router } from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import swaggerUi from "swagger-ui-express";
 import { createIdentityOpenApi } from "./openapi";
 import {
@@ -36,6 +38,14 @@ export function createApp(
   const app = express();
   // When behind the API gateway (Nginx), trust X-Forwarded-For so express-rate-limit can identify clients correctly.
   app.set("trust proxy", 1);
+  app.use(helmet({ contentSecurityPolicy: false }));
+  app.use(rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => req.path === "/health",
+  }));
   app.use(requestIdMiddleware);
   app.use(requestLoggingMiddleware);
 

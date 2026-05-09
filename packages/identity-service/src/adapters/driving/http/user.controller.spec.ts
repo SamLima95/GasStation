@@ -4,6 +4,7 @@ import type { CreateUserUseCase } from "../../../application/use-cases/create-us
 import type { GetUserByIdUseCase } from "../../../application/use-cases/get-user-by-id.use-case";
 import type { UpdateUserUseCase } from "../../../application/use-cases/update-user.use-case";
 import type { DeactivateUserUseCase } from "../../../application/use-cases/deactivate-user.use-case";
+import type { IAuditLogger } from "../../../application/ports/audit-logger.port";
 import type { Response } from "express";
 import type { NextFunction } from "express";
 import {
@@ -19,6 +20,7 @@ describe("UserController", () => {
   let getUserByIdUseCase: GetUserByIdUseCase;
   let updateUserUseCase: UpdateUserUseCase;
   let deactivateUserUseCase: DeactivateUserUseCase;
+  let auditLogger: IAuditLogger;
   let res: Partial<Response>;
   let next: NextFunction;
 
@@ -27,6 +29,7 @@ describe("UserController", () => {
     getUserByIdUseCase = { execute: vi.fn() } as unknown as GetUserByIdUseCase;
     updateUserUseCase = { execute: vi.fn() } as unknown as UpdateUserUseCase;
     deactivateUserUseCase = { execute: vi.fn() } as unknown as DeactivateUserUseCase;
+    auditLogger = { log: vi.fn().mockResolvedValue(undefined) };
     res = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn(),
@@ -48,7 +51,7 @@ describe("UserController", () => {
       };
       vi.mocked(createUserUseCase.execute).mockResolvedValue(created);
 
-      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase);
+      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase, auditLogger);
       const req = createMockAuthenticatedRequest({ body: { email: "u@example.com", name: "Nome" }, userId: "admin-1", userRole: "admin" });
       await controller.create(req, res as Response, next);
 
@@ -61,7 +64,7 @@ describe("UserController", () => {
         new UserAlreadyExistsError("User with this email already exists")
       );
 
-      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase);
+      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase, auditLogger);
       const req = createMockAuthenticatedRequest({ body: { email: "existente@example.com", name: "X" }, userId: "a", userRole: "admin" });
       await controller.create(req, res as Response, next);
 
@@ -72,7 +75,7 @@ describe("UserController", () => {
     it("deve retornar 400 quando InvalidEmailError", async () => {
       vi.mocked(createUserUseCase.execute).mockRejectedValue(new InvalidEmailError("Invalid email"));
 
-      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase);
+      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase, auditLogger);
       const req = createMockAuthenticatedRequest({ body: { email: "invalido", name: "X" }, userId: "a", userRole: "admin" });
       await controller.create(req, res as Response, next);
 
@@ -83,7 +86,7 @@ describe("UserController", () => {
     it("deve retornar 500 para erro não mapeado", async () => {
       vi.mocked(createUserUseCase.execute).mockRejectedValue(new Error("DB error"));
 
-      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase);
+      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase, auditLogger);
       const req = createMockAuthenticatedRequest({ body: { email: "u@example.com", name: "X" }, userId: "a", userRole: "admin" });
       await controller.create(req, res as Response, next);
 
@@ -106,7 +109,7 @@ describe("UserController", () => {
       };
       vi.mocked(getUserByIdUseCase.execute).mockResolvedValue(user);
 
-      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase);
+      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase, auditLogger);
       const req = createMockAuthenticatedRequest({ params: { id: uuidOwner }, userId: uuidOwner, userRole: "user" });
       await controller.getById(req, res as Response, next);
 
@@ -115,7 +118,7 @@ describe("UserController", () => {
     });
 
     it("deve retornar 400 quando id não é UUID", async () => {
-      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase);
+      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase, auditLogger);
       const req = createMockAuthenticatedRequest({ params: { id: "nao-uuid" }, userId: uuidOwner, userRole: "user" });
       await controller.getById(req, res as Response, next);
 
@@ -125,7 +128,7 @@ describe("UserController", () => {
     });
 
     it("deve retornar 403 quando requester não é o dono nem admin", async () => {
-      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase);
+      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase, auditLogger);
       const req = createMockAuthenticatedRequest({ params: { id: uuidOther }, userId: uuidOwner, userRole: "user" });
       await controller.getById(req, res as Response, next);
 
@@ -138,7 +141,7 @@ describe("UserController", () => {
       const user = { id: uuidOther, email: "x@y.com", name: "X", createdAt: "2025-01-01T00:00:00.000Z" };
       vi.mocked(getUserByIdUseCase.execute).mockResolvedValue(user);
 
-      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase);
+      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase, auditLogger);
       const req = createMockAuthenticatedRequest({ params: { id: uuidOther }, userId: uuidAdmin, userRole: "admin" });
       await controller.getById(req, res as Response, next);
 
@@ -149,7 +152,7 @@ describe("UserController", () => {
     it("deve retornar 404 quando usuário não existe", async () => {
       vi.mocked(getUserByIdUseCase.execute).mockResolvedValue(null);
 
-      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase);
+      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase, auditLogger);
       const req = createMockAuthenticatedRequest({ params: { id: uuidOwner }, userId: uuidOwner, userRole: "user" });
       await controller.getById(req, res as Response, next);
 
@@ -160,7 +163,7 @@ describe("UserController", () => {
     it("deve retornar 500 quando use case lança", async () => {
       vi.mocked(getUserByIdUseCase.execute).mockRejectedValue(new Error("DB error"));
 
-      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase);
+      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase, auditLogger);
       const req = createMockAuthenticatedRequest({ params: { id: uuidOwner }, userId: uuidOwner, userRole: "user" });
       await controller.getById(req, res as Response, next);
 
@@ -184,7 +187,7 @@ describe("UserController", () => {
       };
       vi.mocked(updateUserUseCase.execute).mockResolvedValue(updated);
 
-      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase);
+      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase, auditLogger);
       const req = createMockAuthenticatedRequest({
         params: { id: uuidUser },
         body: { name: "Novo Nome" },
@@ -198,7 +201,7 @@ describe("UserController", () => {
     });
 
     it("deve retornar 400 quando id não é UUID", async () => {
-      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase);
+      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase, auditLogger);
       const req = createMockAuthenticatedRequest({
         params: { id: "bad-id" },
         body: { name: "Novo Nome" },
@@ -219,7 +222,7 @@ describe("UserController", () => {
     it("deve retornar 204 quando desativa usuário", async () => {
       vi.mocked(deactivateUserUseCase.execute).mockResolvedValue(undefined);
 
-      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase);
+      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase, auditLogger);
       const req = createMockAuthenticatedRequest({
         params: { id: uuidUser },
         userId: "admin-1",
@@ -233,7 +236,7 @@ describe("UserController", () => {
     });
 
     it("deve retornar 400 quando id não é UUID", async () => {
-      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase);
+      const controller = new UserController(createUserUseCase, getUserByIdUseCase, updateUserUseCase, deactivateUserUseCase, auditLogger);
       const req = createMockAuthenticatedRequest({
         params: { id: "bad-id" },
         userId: "admin-1",
