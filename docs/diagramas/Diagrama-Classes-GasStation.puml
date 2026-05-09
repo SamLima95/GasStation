@@ -1,0 +1,577 @@
+@startuml Diagrama-Classes-GasStation
+title GasStation - Diagrama de Classes (Modelagem Estrutural)\nEntidades de Dominio por Bounded Context
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam classFontSize 12
+skinparam defaultFontSize 11
+
+legend right
+  <b>Convencoes UML</b>
+  - = private
+  + = public
+  # = protected
+  {readOnly} = readonly
+  {static} = static
+  <<Entity>> = Entidade de dominio
+  <<ValueObject>> = Objeto de valor
+  <<Enum>> = Enumeracao
+  ---
+  Tracejado = dependencia cross-service
+endlegend
+
+' ============================================================
+'  IDENTITY SERVICE
+' ============================================================
+package "Identity Service" as pkg_identity #EEEEFF {
+
+  class Email <<ValueObject>> {
+    - _value : string {readOnly}
+    --
+    + {static} create(value : string) : Email
+    + value : string
+  }
+
+  enum TipoUnidade <<Enum>> {
+    filial
+    deposito
+  }
+
+  enum StatusUnidade <<Enum>> {
+    ativa
+    inativa
+  }
+
+  enum NivelAcesso <<Enum>> {
+    operador
+    gerente
+    admin_holding
+  }
+
+  class User <<Entity>> {
+    - _id : string {readOnly}
+    - _email : Email
+    - _name : string
+    - _role : string {readOnly}
+    - _createdAt : Date {readOnly}
+    --
+    + {static} create(id, email, name, role) : User
+    + {static} reconstitute(id, email, name, createdAt, role) : User
+    + id : string
+    + email : Email
+    + name : string
+    + role : string
+    + createdAt : Date
+  }
+
+  class Unidade <<Entity>> {
+    - _id : string {readOnly}
+    - _nome : string
+    - _tipo : TipoUnidade
+    - _status : StatusUnidade
+    - _createdAt : Date {readOnly}
+    - {static} TIPOS_VALIDOS : TipoUnidade[]
+    - {static} STATUS_VALIDOS : StatusUnidade[]
+    --
+    + {static} create(id, nome, tipo, status) : Unidade
+    + {static} reconstitute(id, nome, tipo, status, createdAt) : Unidade
+    + isAtiva() : boolean
+    + desativar() : void
+    + ativar() : void
+    + id : string
+    + nome : string
+    + tipo : TipoUnidade
+    + status : StatusUnidade
+    + createdAt : Date
+  }
+
+  class UsuarioUnidade <<Entity>> {
+    - _id : string {readOnly}
+    - _userId : string {readOnly}
+    - _unidadeId : string {readOnly}
+    - _nivel : NivelAcesso
+    - _createdAt : Date {readOnly}
+    - {static} NIVEIS_VALIDOS : NivelAcesso[]
+    --
+    + {static} create(id, userId, unidadeId, nivel) : UsuarioUnidade
+    + {static} reconstitute(id, userId, unidadeId, nivel, createdAt) : UsuarioUnidade
+    + id : string
+    + userId : string
+    + unidadeId : string
+    + nivel : NivelAcesso
+    + createdAt : Date
+  }
+
+  User *-- Email : usa >
+  User "1" -- "*" UsuarioUnidade : vincula >
+  Unidade "1" -- "*" UsuarioUnidade : autoriza >
+  Unidade --> TipoUnidade
+  Unidade --> StatusUnidade
+  UsuarioUnidade --> NivelAcesso
+}
+
+' ============================================================
+'  CATALOG SERVICE
+' ============================================================
+package "Catalog Service" as pkg_catalog #EEFFEE {
+
+  class Money <<ValueObject>> {
+    - _amount : number {readOnly}
+    - _currency : string {readOnly}
+    --
+    + {static} create(amount, currency) : Money
+    + amount : number
+    + currency : string
+  }
+
+  class Item <<Entity>> {
+    - _id : string {readOnly}
+    - _name : string
+    - _price : Money
+    - _createdAt : Date {readOnly}
+    --
+    + {static} create(id, name, price) : Item
+    + {static} reconstitute(id, name, amount, currency, createdAt) : Item
+    + id : string
+    + name : string
+    + price : Money
+    + createdAt : Date
+  }
+
+  Item *-- Money : preco >
+}
+
+' ============================================================
+'  ORDER SERVICE
+' ============================================================
+package "Order Service" as pkg_order #FFFFEE {
+
+  enum StatusPedido <<Enum>> {
+    PENDENTE
+    CONFIRMADO
+    ENTREGUE
+    CANCELADO
+  }
+
+  enum TipoPagamento <<Enum>> {
+    A_VISTA
+    FIADO
+    CARTAO
+    PIX
+  }
+
+  enum StatusNotaFiscal <<Enum>> {
+    PENDENTE
+    AUTORIZADA
+    REJEITADA
+    FALHA
+  }
+
+  class Cliente <<Entity>> {
+    - _id : string {readOnly}
+    - _nome : string
+    - _documento : string
+    - _limiteCredito : number
+    - _saldoDevedor : number
+    - _unidadeId : string {readOnly}
+    - _createdAt : Date {readOnly}
+    --
+    + {static} create(id, nome, documento, limiteCredito, unidadeId) : Cliente
+    + {static} reconstitute(...) : Cliente
+    + verificarLimiteCredito(valorPedido : number) : boolean
+    + adicionarSaldoDevedor(valor : number) : void
+    + id : string
+    + nome : string
+    + documento : string
+    + limiteCredito : number
+    + saldoDevedor : number
+    + unidadeId : string
+    + createdAt : Date
+  }
+
+  class Pedido <<Entity>> {
+    - _id : string {readOnly}
+    - _clienteId : string {readOnly}
+    - _unidadeId : string {readOnly}
+    - _status : StatusPedido
+    - _tipoPagamento : TipoPagamento {readOnly}
+    - _valorTotal : number
+    - _dataPedido : Date {readOnly}
+    - _dataEntregaPrevista : Date | null {readOnly}
+    - _itens : ItemPedido[] {readOnly}
+    --
+    + {static} create(id, clienteId, unidadeId, tipoPagamento, itens, dataEntregaPrevista) : Pedido
+    + {static} reconstitute(...) : Pedido
+    + confirmar() : void
+    + entregar() : void
+    + cancelar() : void
+    + id : string
+    + clienteId : string
+    + unidadeId : string
+    + status : StatusPedido
+    + tipoPagamento : TipoPagamento
+    + valorTotal : number
+    + dataPedido : Date
+    + dataEntregaPrevista : Date | null
+    + itens : ItemPedido[]
+  }
+
+  class ItemPedido <<Entity>> {
+    - _id : string {readOnly}
+    - _pedidoId : string {readOnly}
+    - _vasilhameId : string {readOnly}
+    - _quantidade : number {readOnly}
+    - _precoUnitario : number {readOnly}
+    --
+    + {static} create(id, pedidoId, vasilhameId, quantidade, precoUnitario) : ItemPedido
+    + {static} reconstitute(...) : ItemPedido
+    + subtotal : number
+    + id : string
+    + pedidoId : string
+    + vasilhameId : string
+    + quantidade : number
+    + precoUnitario : number
+  }
+
+  class NotaFiscal <<Entity>> {
+    - _id : string {readOnly}
+    - _pedidoId : string {readOnly}
+    - _chaveAcesso : string | null
+    - _status : StatusNotaFiscal
+    - _tentativas : number
+    - _mensagem : string | null
+    - _createdAt : Date {readOnly}
+    --
+    + {static} create(id, pedidoId) : NotaFiscal
+    + {static} reconstitute(...) : NotaFiscal
+    + autorizar(chaveAcesso : string) : void
+    + rejeitar(mensagem : string) : void
+    + registrarFalha(mensagem : string) : void
+    + id : string
+    + pedidoId : string
+    + chaveAcesso : string | null
+    + status : StatusNotaFiscal
+    + tentativas : number
+    + mensagem : string | null
+    + createdAt : Date
+  }
+
+  Cliente "1" -- "*" Pedido : realiza >
+  Pedido "1" *-- "1..*" ItemPedido : contem >
+  Pedido "1" -- "*" NotaFiscal : gera >
+  Pedido --> StatusPedido
+  Pedido --> TipoPagamento
+  NotaFiscal --> StatusNotaFiscal
+}
+
+' ============================================================
+'  STOCK SERVICE
+' ============================================================
+package "Stock Service" as pkg_stock #FFEEEE {
+
+  enum TipoMovimentacao <<Enum>> {
+    ENTRADA
+    SAIDA
+    RETORNO
+    AVARIA
+    AJUSTE
+  }
+
+  class Vasilhame <<Entity>> {
+    - _id : string {readOnly}
+    - _tipo : string
+    - _descricao : string
+    - _capacidade : number
+    - _createdAt : Date {readOnly}
+    --
+    + {static} create(id, tipo, descricao, capacidade) : Vasilhame
+    + {static} reconstitute(...) : Vasilhame
+    + id : string
+    + tipo : string
+    + descricao : string
+    + capacidade : number
+    + createdAt : Date
+  }
+
+  class MovimentacaoEstoque <<Entity>> {
+    - _id : string {readOnly}
+    - _unidadeId : string {readOnly}
+    - _vasilhameId : string {readOnly}
+    - _usuarioId : string {readOnly}
+    - _pedidoId : string | null {readOnly}
+    - _tipoMovimentacao : TipoMovimentacao {readOnly}
+    - _quantidade : number {readOnly}
+    - _dataHora : Date {readOnly}
+    --
+    + {static} create(id, unidadeId, vasilhameId, usuarioId, pedidoId, tipoMovimentacao, quantidade) : MovimentacaoEstoque
+    + {static} reconstitute(...) : MovimentacaoEstoque
+    + id : string
+    + unidadeId : string
+    + vasilhameId : string
+    + usuarioId : string
+    + pedidoId : string | null
+    + tipoMovimentacao : TipoMovimentacao
+    + quantidade : number
+    + dataHora : Date
+  }
+
+  class Comodato <<Entity>> {
+    - _id : string {readOnly}
+    - _clienteId : string {readOnly}
+    - _unidadeId : string {readOnly}
+    - _vasilhameId : string {readOnly}
+    - _saldoComodato : number
+    - _atualizadoEm : Date
+    --
+    + {static} create(id, clienteId, unidadeId, vasilhameId, saldoComodato) : Comodato
+    + {static} reconstitute(...) : Comodato
+    + adjustSaldo(delta : number) : void
+    + id : string
+    + clienteId : string
+    + unidadeId : string
+    + vasilhameId : string
+    + saldoComodato : number
+    + atualizadoEm : Date
+  }
+
+  Vasilhame "1" -- "*" MovimentacaoEstoque : movimentado >
+  Vasilhame "1" -- "*" Comodato : vincula >
+  MovimentacaoEstoque --> TipoMovimentacao
+}
+
+' ============================================================
+'  LOGISTICS SERVICE
+' ============================================================
+package "Logistics Service" as pkg_logistics #EEFFFF {
+
+  enum StatusRota <<Enum>> {
+    PLANEJADA
+    EM_ANDAMENTO
+    FINALIZADA
+    CANCELADA
+  }
+
+  enum StatusEntrega <<Enum>> {
+    PENDENTE
+    EM_TRANSITO
+    ENTREGUE
+    FALHA
+  }
+
+  class Entregador <<Entity>> {
+    - _id : string {readOnly}
+    - _nome : string
+    - _documento : string
+    - _ativo : boolean
+    - _unidadeId : string {readOnly}
+    --
+    + {static} create(id, nome, documento, unidadeId) : Entregador
+    + {static} reconstitute(...) : Entregador
+    + desativar() : void
+    + ativar() : void
+    + id : string
+    + nome : string
+    + documento : string
+    + ativo : boolean
+    + unidadeId : string
+  }
+
+  class Veiculo <<Entity>> {
+    - _id : string {readOnly}
+    - _placa : string
+    - _modelo : string
+    - _ativo : boolean
+    - _unidadeId : string {readOnly}
+    --
+    + {static} create(id, placa, modelo, unidadeId) : Veiculo
+    + {static} reconstitute(...) : Veiculo
+    + desativar() : void
+    + ativar() : void
+    + id : string
+    + placa : string
+    + modelo : string
+    + ativo : boolean
+    + unidadeId : string
+  }
+
+  class Rota <<Entity>> {
+    - _id : string {readOnly}
+    - _unidadeId : string {readOnly}
+    - _entregadorId : string {readOnly}
+    - _veiculoId : string {readOnly}
+    - _dataRota : Date {readOnly}
+    - _status : StatusRota
+    --
+    + {static} create(id, unidadeId, entregadorId, veiculoId, dataRota) : Rota
+    + {static} reconstitute(...) : Rota
+    + iniciar() : void
+    + finalizar() : void
+    + cancelar() : void
+    + id : string
+    + unidadeId : string
+    + entregadorId : string
+    + veiculoId : string
+    + dataRota : Date
+    + status : StatusRota
+  }
+
+  class Entrega <<Entity>> {
+    - _id : string {readOnly}
+    - _rotaId : string | null
+    - _pedidoId : string {readOnly}
+    - _status : StatusEntrega
+    - _dataConfirmacao : Date | null
+    --
+    + {static} create(id, pedidoId) : Entrega
+    + {static} reconstitute(...) : Entrega
+    + atribuirRota(rotaId : string) : void
+    + iniciarTransito() : void
+    + confirmar() : void
+    + registrarFalha() : void
+    + id : string
+    + rotaId : string | null
+    + pedidoId : string
+    + status : StatusEntrega
+    + dataConfirmacao : Date | null
+  }
+
+  Entregador "1" -- "*" Rota : executa >
+  Veiculo "1" -- "*" Rota : utilizado >
+  Rota "1" -- "*" Entrega : agrega >
+  Rota --> StatusRota
+  Entrega --> StatusEntrega
+}
+
+' ============================================================
+'  FINANCIAL SERVICE
+' ============================================================
+package "Financial Service" as pkg_financial #FFEEFF {
+
+  enum StatusCaixa <<Enum>> {
+    ABERTO
+    FECHADO
+  }
+
+  enum StatusContaAReceber <<Enum>> {
+    PENDENTE
+    PAGO_PARCIAL
+    PAGO
+    VENCIDO
+  }
+
+  class Caixa <<Entity>> {
+    - _id : string {readOnly}
+    - _unidadeId : string {readOnly}
+    - _dataAbertura : Date {readOnly}
+    - _dataFechamento : Date | null
+    - _status : StatusCaixa
+    - _saldoInicial : number {readOnly}
+    - _saldoFinal : number | null
+    --
+    + {static} create(id, unidadeId, saldoInicial) : Caixa
+    + {static} reconstitute(...) : Caixa
+    + fechar() : void
+    + adicionarRecebimento(valor : number) : void
+    + id : string
+    + unidadeId : string
+    + dataAbertura : Date
+    + dataFechamento : Date | null
+    + status : StatusCaixa
+    + saldoInicial : number
+    + saldoFinal : number | null
+  }
+
+  class ContaAReceber <<Entity>> {
+    - _id : string {readOnly}
+    - _pedidoId : string {readOnly}
+    - _clienteId : string {readOnly}
+    - _caixaId : string | null
+    - _valorOriginal : number {readOnly}
+    - _valorAberto : number
+    - _status : StatusContaAReceber
+    - _vencimento : Date {readOnly}
+    - _createdAt : Date {readOnly}
+    --
+    + {static} create(id, pedidoId, clienteId, valorOriginal, vencimento) : ContaAReceber
+    + {static} reconstitute(...) : ContaAReceber
+    + registrarPagamento(valor : number, caixaId : string) : void
+    + isVencida() : boolean
+    + id : string
+    + pedidoId : string
+    + clienteId : string
+    + caixaId : string | null
+    + valorOriginal : number
+    + valorAberto : number
+    + status : StatusContaAReceber
+    + vencimento : Date
+    + createdAt : Date
+  }
+
+  Caixa "1" -- "*" ContaAReceber : baixa >
+  Caixa --> StatusCaixa
+  ContaAReceber --> StatusContaAReceber
+}
+
+' ============================================================
+'  AUDIT SERVICE
+' ============================================================
+package "Audit Service" as pkg_audit #FFF5EE {
+
+  class Auditoria <<Entity>> {
+    - _id : string {readOnly}
+    - _servico : string {readOnly}
+    - _entidade : string {readOnly}
+    - _entidadeId : string {readOnly}
+    - _acao : string {readOnly}
+    - _usuarioId : string | null {readOnly}
+    - _unidadeId : string | null {readOnly}
+    - _detalhes : Record | null {readOnly}
+    - _occurredAt : Date {readOnly}
+    - _createdAt : Date {readOnly}
+    --
+    + {static} create(id, servico, entidade, entidadeId, acao, usuarioId, unidadeId, detalhes, occurredAt) : Auditoria
+    + {static} reconstitute(...) : Auditoria
+    + id : string
+    + servico : string
+    + entidade : string
+    + entidadeId : string
+    + acao : string
+    + usuarioId : string | null
+    + unidadeId : string | null
+    + detalhes : Record | null
+    + occurredAt : Date
+    + createdAt : Date
+  }
+
+  note bottom of Auditoria
+    Imutavel apos criacao.
+    Somente INSERT e SELECT.
+  end note
+}
+
+' ============================================================
+'  DEPENDENCIAS CROSS-SERVICE (por ID, sem acoplamento direto)
+' ============================================================
+Unidade ..> Cliente : unidadeId
+Unidade ..> Pedido : unidadeId
+Unidade ..> MovimentacaoEstoque : unidadeId
+Unidade ..> Comodato : unidadeId
+Unidade ..> Entregador : unidadeId
+Unidade ..> Veiculo : unidadeId
+Unidade ..> Rota : unidadeId
+Unidade ..> Caixa : unidadeId
+Unidade ..> Auditoria : unidadeId
+
+User ..> MovimentacaoEstoque : usuarioId
+User ..> Auditoria : usuarioId
+
+Pedido ..> Entrega : pedidoId
+Pedido ..> ContaAReceber : pedidoId
+Pedido ..> MovimentacaoEstoque : pedidoId
+
+Cliente ..> Comodato : clienteId
+Cliente ..> ContaAReceber : clienteId
+
+Vasilhame ..> ItemPedido : vasilhameId
+
+@enduml

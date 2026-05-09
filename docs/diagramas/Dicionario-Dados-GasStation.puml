@@ -1,203 +1,322 @@
-@startuml
-title GasStation - Dicionario de Dados (visao inicial)
-hide methods
-skinparam classAttributeIconSize 0
-skinparam linetype ortho
+@startuml Dicionario-Dados-GasStation
+title GasStation - Dicionario de Dados Completo
+caption Baseado nos schemas Prisma (PostgreSQL) | Atualizado em 2026-04-09
 
-legend right
+skinparam NoteBackgroundColor #FEFEFE
+skinparam NoteBorderColor #999999
+skinparam NoteFontSize 11
+skinparam DefaultFontSize 11
+
+note as LEGENDA
   <b>Convencoes</b>
-  PK = Chave primaria
-  FK = Chave estrangeira
-  NN = Not Null
-  UQ = Unico
-endlegend
+  PK = Chave Primaria | FK = Chave Estrangeira
+  NN = NOT NULL | UQ = Unico | DEF = Valor Padrao
+  ref = referencia cross-service (sem FK fisico)
+end note
 
-class PERFIL <<Tabela>> {
-  id: uuid [PK, NN]
-  nome: varchar(100) [NN, UQ]
-  descricao: varchar(255)
-}
+note as IDENTITY_TITLE #CCCCFF
+  <b><size:14>IDENTITY SERVICE (identity_db)</size></b>
+end note
 
-class USUARIO <<Tabela>> {
-  id: uuid [PK, NN]
-  nome: varchar(150) [NN]
-  email: varchar(150) [NN, UQ]
-  senha_hash: varchar(255) [NN]
-  ativo: boolean [NN]
-  criado_em: timestamp [NN]
-  perfil_id: uuid [FK, NN]
-}
+note as T_USUARIO
+  <b>USUARIO</b> (tabela: users)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico do usuario |
+  | email | varchar | 255 | NN, UQ | - | Email de acesso do usuario |
+  | name | varchar | 255 | NN | - | Nome completo do usuario |
+  | role | varchar | 50 | NN | "user" | Papel do usuario (user, admin) |
+  | created_at | timestamp | - | NN | - | Data e hora de criacao do registro |
+end note
 
-class UNIDADE <<Tabela>> {
-  id: uuid [PK, NN]
-  nome: varchar(120) [NN]
-  tipo: varchar(30) [NN]
-  ativa: boolean [NN]
-}
+note as T_AUTH_CREDENTIAL
+  <b>AUTH_CREDENTIAL</b> (tabela: auth_credentials)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico da credencial |
+  | user_id | uuid | 36 | FK, NN, UQ | - | Referencia ao usuario (users.id) |
+  | password_hash | varchar | 255 | NN | - | Hash bcrypt da senha do usuario |
+end note
 
-class USUARIO_UNIDADE <<Tabela>> {
-  usuario_id: uuid [PK, FK, NN]
-  unidade_id: uuid [PK, FK, NN]
-  nivel_acesso: varchar(30) [NN]
-}
+note as T_OAUTH_ACCOUNT
+  <b>OAUTH_ACCOUNT</b> (tabela: oauth_accounts)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico da conta OAuth |
+  | user_id | uuid | 36 | FK, NN | - | Referencia ao usuario (users.id) |
+  | provider | varchar | 30 | NN | - | Provedor OAuth (google, github) |
+  | provider_id | varchar | 255 | NN | - | ID do usuario no provedor externo |
+  | created_at | timestamp | - | NN | - | Data de vinculacao da conta |
+  Restricao: UQ(provider, provider_id)
+end note
 
-class CLIENTE <<Tabela>> {
-  id: uuid [PK, NN]
-  nome: varchar(150) [NN]
-  documento: varchar(20) [NN, UQ]
-  limite_credito: decimal(12,2) [NN]
-  saldo_devedor: decimal(12,2) [NN]
-  unidade_id: uuid [FK, NN]
-}
+note as T_UNIDADE
+  <b>UNIDADE</b> (tabela: unidades)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico da unidade |
+  | nome | varchar | 120 | NN | - | Nome da filial ou deposito |
+  | tipo | varchar | 30 | NN | - | Tipo da unidade (filial, deposito) |
+  | status | varchar | 20 | NN | "ativa" | Status operacional (ativa, inativa) |
+  | created_at | timestamp | - | NN | - | Data de criacao do registro |
+end note
 
-class PEDIDO <<Tabela>> {
-  id: uuid [PK, NN]
-  cliente_id: uuid [FK, NN]
-  unidade_id: uuid [FK, NN]
-  status: varchar(30) [NN]
-  valor_total: decimal(12,2) [NN]
-  data_pedido: timestamp [NN]
-  data_entrega_prevista: timestamp
-}
+note as T_USUARIO_UNIDADE
+  <b>USUARIO_UNIDADE</b> (tabela: usuario_unidade)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico do vinculo |
+  | user_id | uuid | 36 | FK, NN | - | Referencia ao usuario (users.id) |
+  | unidade_id | uuid | 36 | FK, NN | - | Referencia a unidade (unidades.id) |
+  | nivel | varchar | 30 | NN | "operador" | Nivel de acesso (operador, gerente, admin_holding) |
+  | created_at | timestamp | - | NN | - | Data de atribuicao do vinculo |
+  Restricao: UQ(user_id, unidade_id)
+end note
 
-class ITEM_PEDIDO <<Tabela>> {
-  id: uuid [PK, NN]
-  pedido_id: uuid [FK, NN]
-  vasilhame_id: uuid [FK, NN]
-  quantidade: int [NN]
-  preco_unitario: decimal(12,2) [NN]
-}
+note as T_CONFIGURACAO_UNIDADE
+  <b>CONFIGURACAO_UNIDADE</b> (tabela: configuracao_unidade)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico da configuracao |
+  | unidade_id | uuid | 36 | FK, NN | - | Referencia a unidade (unidades.id) |
+  | chave | varchar | 80 | NN | - | Chave do parametro de configuracao |
+  | valor | varchar | 255 | NN | - | Valor do parametro |
+  | created_at | timestamp | - | NN | - | Data da ultima atualizacao |
+  Restricao: UQ(unidade_id, chave)
+end note
 
-class VASILHAME <<Tabela>> {
-  id: uuid [PK, NN]
-  tipo: varchar(20) [NN]
-  descricao: varchar(120)
-  capacidade: decimal(8,2) [NN]
-}
+note as T_OUTBOX
+  <b>OUTBOX</b> (tabela: outbox)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico do evento |
+  | event_name | varchar | 120 | NN | - | Nome do evento de dominio |
+  | payload | jsonb | variavel | NN | - | Dados do evento em JSON |
+  | created_at | timestamp | - | NN | - | Data de criacao do evento |
+  | published_at | timestamp | - | - | NULL | Data de publicacao (null = pendente) |
+  Indice: INDEX(published_at)
+end note
 
-class MOVIMENTACAO_ESTOQUE <<Tabela>> {
-  id: uuid [PK, NN]
-  unidade_id: uuid [FK, NN]
-  vasilhame_id: uuid [FK, NN]
-  usuario_id: uuid [FK, NN]
-  pedido_id: uuid [FK]
-  tipo_movimentacao: varchar(30) [NN]
-  quantidade: int [NN]
-  data_hora: timestamp [NN]
-}
+T_USUARIO -[hidden]-> T_AUTH_CREDENTIAL
+T_AUTH_CREDENTIAL -[hidden]-> T_OAUTH_ACCOUNT
+T_OAUTH_ACCOUNT -[hidden]-> T_UNIDADE
+T_UNIDADE -[hidden]-> T_USUARIO_UNIDADE
+T_USUARIO_UNIDADE -[hidden]-> T_CONFIGURACAO_UNIDADE
+T_CONFIGURACAO_UNIDADE -[hidden]-> T_OUTBOX
 
-class COMODATO <<Tabela>> {
-  id: uuid [PK, NN]
-  cliente_id: uuid [FK, NN]
-  unidade_id: uuid [FK, NN]
-  vasilhame_id: uuid [FK, NN]
-  saldo_comodato: int [NN]
-  atualizado_em: timestamp [NN]
-}
+newpage
 
-class ENTREGADOR <<Tabela>> {
-  id: uuid [PK, NN]
-  nome: varchar(150) [NN]
-  documento: varchar(20) [NN, UQ]
-  ativo: boolean [NN]
-  unidade_id: uuid [FK, NN]
-}
+note as CATALOG_TITLE #CCFFCC
+  <b><size:14>CATALOG SERVICE (catalog_db)</size></b>
+end note
 
-class VEICULO <<Tabela>> {
-  id: uuid [PK, NN]
-  placa: varchar(10) [NN, UQ]
-  modelo: varchar(80) [NN]
-  ativo: boolean [NN]
-  unidade_id: uuid [FK, NN]
-}
+note as T_ITEM
+  <b>ITEM</b> (tabela: items)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico do item |
+  | name | varchar | 255 | NN | - | Nome do produto no catalogo |
+  | price_amount | int | 4 bytes | NN | - | Valor do preco em centavos |
+  | price_currency | varchar | 3 | NN | "BRL" | Moeda ISO 4217 (ex: BRL, USD) |
+  | created_at | timestamp | - | NN | - | Data de criacao do item |
+end note
 
-class ROTA <<Tabela>> {
-  id: uuid [PK, NN]
-  unidade_id: uuid [FK, NN]
-  entregador_id: uuid [FK, NN]
-  data_rota: timestamp [NN]
-  status: varchar(30) [NN]
-}
+note as ORDER_TITLE #FFFFCC
+  <b><size:14>ORDER SERVICE (order_db)</size></b>
+end note
 
-class ENTREGA <<Tabela>> {
-  id: uuid [PK, NN]
-  rota_id: uuid [FK, NN]
-  pedido_id: uuid [FK, NN]
-  status: varchar(30) [NN]
-  data_confirmacao: timestamp
-}
+note as T_CLIENTE
+  <b>CLIENTE</b> (tabela: clientes)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico do cliente |
+  | nome | varchar | 150 | NN | - | Nome ou razao social do cliente |
+  | documento | varchar | 20 | NN, UQ | - | CPF ou CNPJ do cliente |
+  | limite_credito | decimal | (12,2) | NN | - | Limite maximo para compras a prazo |
+  | saldo_devedor | decimal | (12,2) | NN | 0 | Total em aberto do cliente |
+  | unidade_id | uuid | 36 | NN, ref | - | Unidade que atende o cliente (ref unidades.id) |
+  | created_at | timestamp | - | NN | now() | Data de cadastro do cliente |
+end note
 
-class CAIXA <<Tabela>> {
-  id: uuid [PK, NN]
-  unidade_id: uuid [FK, NN]
-  data_abertura: date [NN]
-  data_fechamento: date
-  status: varchar(20) [NN]
-}
+note as T_PEDIDO
+  <b>PEDIDO</b> (tabela: pedidos)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico do pedido |
+  | cliente_id | uuid | 36 | FK, NN | - | Cliente que realizou o pedido (clientes.id) |
+  | unidade_id | uuid | 36 | NN, ref | - | Unidade de origem (ref unidades.id) |
+  | status | enum | - | NN | PENDENTE | Estado do pedido: PENDENTE, CONFIRMADO, ENTREGUE, CANCELADO |
+  | tipo_pagamento | enum | - | NN | - | Forma de pagamento: A_VISTA, FIADO, CARTAO, PIX |
+  | valor_total | decimal | (12,2) | NN | - | Soma dos itens (quantidade x preco_unitario) |
+  | data_pedido | timestamp | - | NN | now() | Data e hora de criacao do pedido |
+  | data_entrega_prevista | timestamp | - | - | NULL | Previsao de entrega (opcional) |
+end note
 
-class CONTA_A_RECEBER <<Tabela>> {
-  id: uuid [PK, NN]
-  pedido_id: uuid [FK, NN]
-  cliente_id: uuid [FK, NN]
-  caixa_id: uuid [FK, NN]
-  valor_original: decimal(12,2) [NN]
-  valor_aberto: decimal(12,2) [NN]
-  status: varchar(30) [NN]
-  vencimento: date [NN]
-}
+note as T_ITEM_PEDIDO
+  <b>ITEM_PEDIDO</b> (tabela: itens_pedido)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico do item do pedido |
+  | pedido_id | uuid | 36 | FK, NN | - | Pedido pai (pedidos.id) |
+  | vasilhame_id | uuid | 36 | NN, ref | - | Tipo de vasilhame (ref vasilhames.id) |
+  | quantidade | int | 4 bytes | NN | - | Quantidade de unidades solicitadas |
+  | preco_unitario | decimal | (12,2) | NN | - | Preco por unidade no momento da venda |
+end note
 
-class AUDITORIA <<Tabela>> {
-  id: uuid [PK, NN]
-  entidade: varchar(80) [NN]
-  entidade_id: uuid [NN]
-  usuario_id: uuid [FK, NN]
-  unidade_id: uuid [FK, NN]
-  data_hora: timestamp [NN]
-  acao: varchar(50) [NN]
-  alteracao: text [NN]
-}
+note as T_NOTA_FISCAL
+  <b>NOTA_FISCAL</b> (tabela: notas_fiscais)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico da nota fiscal |
+  | pedido_id | uuid | 36 | FK, NN | - | Pedido vinculado (pedidos.id) |
+  | chave_acesso | varchar | 44 | - | NULL | Chave de acesso da NF-e (44 digitos) |
+  | status | enum | - | NN | PENDENTE | Estado: PENDENTE, AUTORIZADA, REJEITADA, FALHA |
+  | tentativas | int | 4 bytes | NN | 0 | Numero de tentativas de emissao |
+  | mensagem | varchar | 500 | - | NULL | Mensagem de erro ou rejeicao da SEFAZ |
+  | created_at | timestamp | - | NN | now() | Data de criacao do registro |
+end note
 
-class CONFIGURACAO_UNIDADE <<Tabela>> {
-  id: uuid [PK, NN]
-  unidade_id: uuid [FK, NN]
-  chave: varchar(80) [NN]
-  valor: varchar(255) [NN]
-  atualizado_em: timestamp [NN]
-}
+T_ITEM -[hidden]-> T_CLIENTE
+T_CLIENTE -[hidden]-> T_PEDIDO
+T_PEDIDO -[hidden]-> T_ITEM_PEDIDO
+T_ITEM_PEDIDO -[hidden]-> T_NOTA_FISCAL
 
-PERFIL "1" -- "N" USUARIO
-USUARIO "1" -- "N" USUARIO_UNIDADE
-UNIDADE "1" -- "N" USUARIO_UNIDADE
+newpage
 
-UNIDADE "1" -- "N" CLIENTE
-CLIENTE "1" -- "N" PEDIDO
-UNIDADE "1" -- "N" PEDIDO
-PEDIDO "1" -- "N" ITEM_PEDIDO
-VASILHAME "1" -- "N" ITEM_PEDIDO
+note as STOCK_TITLE #FFCCCC
+  <b><size:14>STOCK SERVICE (stock_db)</size></b>
+end note
 
-UNIDADE "1" -- "N" MOVIMENTACAO_ESTOQUE
-VASILHAME "1" -- "N" MOVIMENTACAO_ESTOQUE
-USUARIO "1" -- "N" MOVIMENTACAO_ESTOQUE
-PEDIDO "0..1" -- "N" MOVIMENTACAO_ESTOQUE
+note as T_VASILHAME
+  <b>VASILHAME</b> (tabela: vasilhames)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico do vasilhame |
+  | tipo | varchar | 20 | NN | - | Classificacao (P13, P45, P20, etc.) |
+  | descricao | varchar | 120 | NN | - | Descricao detalhada do vasilhame |
+  | capacidade | float | 8 bytes | NN | - | Capacidade em kg (ex: 13.0, 45.0) |
+  | created_at | timestamp | - | NN | now() | Data de cadastro |
+end note
 
-CLIENTE "1" -- "N" COMODATO
-UNIDADE "1" -- "N" COMODATO
-VASILHAME "1" -- "N" COMODATO
+note as T_MOVIMENTACAO
+  <b>MOVIMENTACAO_ESTOQUE</b> (tabela: movimentacoes_estoque)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico da movimentacao |
+  | unidade_id | uuid | 36 | NN, ref | - | Unidade do estoque (ref unidades.id) |
+  | vasilhame_id | uuid | 36 | FK, NN | - | Tipo de vasilhame (vasilhames.id) |
+  | usuario_id | uuid | 36 | NN, ref | - | Responsavel pelo registro (ref users.id) |
+  | pedido_id | uuid | 36 | ref | NULL | Pedido vinculado, se houver (ref pedidos.id) |
+  | tipo_movimentacao | enum | - | NN | - | Tipo: ENTRADA, SAIDA, RETORNO, AVARIA, AJUSTE |
+  | quantidade | int | 4 bytes | NN | - | Quantidade movimentada (sempre positivo) |
+  | data_hora | timestamp | - | NN | now() | Data e hora da movimentacao |
+end note
 
-UNIDADE "1" -- "N" ENTREGADOR
-UNIDADE "1" -- "N" VEICULO
-UNIDADE "1" -- "N" ROTA
-ENTREGADOR "1" -- "N" ROTA
-ROTA "1" -- "N" ENTREGA
-PEDIDO "1" -- "N" ENTREGA
+note as T_COMODATO
+  <b>COMODATO</b> (tabela: comodatos)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico do comodato |
+  | cliente_id | uuid | 36 | NN, ref | - | Cliente detentor (ref clientes.id) |
+  | unidade_id | uuid | 36 | NN, ref | - | Unidade responsavel (ref unidades.id) |
+  | vasilhame_id | uuid | 36 | FK, NN | - | Tipo de vasilhame (vasilhames.id) |
+  | saldo_comodato | int | 4 bytes | NN | - | Qtd de vasilhames em posse do cliente |
+  | atualizado_em | timestamp | - | NN | auto | Ultima atualizacao do saldo (auto-update) |
+  Restricao: UQ(cliente_id, unidade_id, vasilhame_id)
+end note
 
-UNIDADE "1" -- "N" CAIXA
-PEDIDO "1" -- "N" CONTA_A_RECEBER
-CLIENTE "1" -- "N" CONTA_A_RECEBER
-CAIXA "1" -- "N" CONTA_A_RECEBER
+T_VASILHAME -[hidden]-> T_MOVIMENTACAO
+T_MOVIMENTACAO -[hidden]-> T_COMODATO
 
-USUARIO "1" -- "N" AUDITORIA
-UNIDADE "1" -- "N" AUDITORIA
-UNIDADE "1" -- "N" CONFIGURACAO_UNIDADE
+newpage
+
+note as LOGISTICS_TITLE #CCFFFF
+  <b><size:14>LOGISTICS SERVICE (logistics_db)</size></b>
+end note
+
+note as T_ENTREGADOR
+  <b>ENTREGADOR</b> (tabela: entregadores)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico do entregador |
+  | nome | varchar | 150 | NN | - | Nome completo do entregador |
+  | documento | varchar | 20 | NN | - | CPF do entregador |
+  | ativo | boolean | 1 byte | NN | true | Indica se esta disponivel para rotas |
+  | unidade_id | uuid | 36 | NN, ref | - | Unidade de alocacao (ref unidades.id) |
+end note
+
+note as T_VEICULO
+  <b>VEICULO</b> (tabela: veiculos)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico do veiculo |
+  | placa | varchar | 10 | NN, UQ | - | Placa do veiculo (formato Mercosul) |
+  | modelo | varchar | 80 | NN | - | Modelo/descricao do veiculo |
+  | ativo | boolean | 1 byte | NN | true | Indica se esta disponivel para uso |
+  | unidade_id | uuid | 36 | NN, ref | - | Unidade proprietaria (ref unidades.id) |
+end note
+
+note as T_ROTA
+  <b>ROTA</b> (tabela: rotas)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico da rota |
+  | unidade_id | uuid | 36 | NN, ref | - | Unidade de origem (ref unidades.id) |
+  | entregador_id | uuid | 36 | FK, NN | - | Entregador designado (entregadores.id) |
+  | veiculo_id | uuid | 36 | FK, NN | - | Veiculo utilizado (veiculos.id) |
+  | data_rota | timestamp | - | NN | - | Data programada para a rota |
+  | status | enum | - | NN | PLANEJADA | Estado: PLANEJADA, EM_ANDAMENTO, FINALIZADA, CANCELADA |
+end note
+
+note as T_ENTREGA
+  <b>ENTREGA</b> (tabela: entregas)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico da entrega |
+  | rota_id | uuid | 36 | FK | NULL | Rota associada (rotas.id), null se pendente |
+  | pedido_id | uuid | 36 | NN, ref | - | Pedido a ser entregue (ref pedidos.id) |
+  | status | enum | - | NN | PENDENTE | Estado: PENDENTE, EM_TRANSITO, ENTREGUE, FALHA |
+  | data_confirmacao | timestamp | - | - | NULL | Data/hora em que a entrega foi confirmada |
+end note
+
+T_ENTREGADOR -[hidden]-> T_VEICULO
+T_VEICULO -[hidden]-> T_ROTA
+T_ROTA -[hidden]-> T_ENTREGA
+
+newpage
+
+note as FINANCIAL_TITLE #FFCCFF
+  <b><size:14>FINANCIAL SERVICE (financial_db)</size></b>
+end note
+
+note as T_CAIXA
+  <b>CAIXA</b> (tabela: caixas)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico do caixa |
+  | unidade_id | uuid | 36 | NN, ref | - | Unidade do caixa (ref unidades.id) |
+  | data_abertura | timestamp | - | NN | now() | Data e hora de abertura do caixa |
+  | data_fechamento | timestamp | - | - | NULL | Data e hora de fechamento (null = aberto) |
+  | status | enum | - | NN | ABERTO | Estado do caixa: ABERTO, FECHADO |
+  | saldo_inicial | decimal | (12,2) | NN | - | Valor em dinheiro na abertura do caixa |
+  | saldo_final | decimal | (12,2) | - | NULL | Valor apurado no fechamento |
+end note
+
+note as T_CONTA_A_RECEBER
+  <b>CONTA_A_RECEBER</b> (tabela: contas_a_receber)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico da conta |
+  | pedido_id | uuid | 36 | NN, ref | - | Pedido de origem (ref pedidos.id) |
+  | cliente_id | uuid | 36 | NN, ref | - | Cliente devedor (ref clientes.id) |
+  | caixa_id | uuid | 36 | FK | NULL | Caixa da baixa (caixas.id), null se em aberto |
+  | valor_original | decimal | (12,2) | NN | - | Valor total da divida no momento da criacao |
+  | valor_aberto | decimal | (12,2) | NN | - | Saldo restante a pagar |
+  | status | enum | - | NN | PENDENTE | Estado: PENDENTE, PAGO_PARCIAL, PAGO, VENCIDO |
+  | vencimento | timestamp | - | NN | - | Data limite para pagamento |
+  | created_at | timestamp | - | NN | now() | Data de criacao do registro |
+end note
+
+note as AUDIT_TITLE #FFEEDD
+  <b><size:14>AUDIT SERVICE (audit_db)</size></b>
+end note
+
+note as T_AUDITORIA
+  <b>AUDITORIA</b> (tabela: auditoria) - Append-only (somente INSERT e SELECT)
+  |= Nome da Coluna |= Tipo de Dados |= Tamanho |= Restricoes |= Valor Padrao |= Descricao |
+  | id | uuid | 36 | PK, NN | uuid() | Identificador unico do registro de auditoria |
+  | servico | varchar | 80 | NN | - | Nome do microservico que gerou o evento |
+  | entidade | varchar | 80 | NN | - | Tipo da entidade afetada (ex: Pedido, Cliente) |
+  | entidade_id | uuid | 36 | NN | - | ID da entidade afetada |
+  | acao | varchar | 50 | NN | - | Acao realizada (CREATE, UPDATE, DELETE) |
+  | usuario_id | uuid | 36 | ref | NULL | Usuario responsavel (ref users.id), null se sistema |
+  | unidade_id | uuid | 36 | ref | NULL | Contexto da unidade (ref unidades.id) |
+  | detalhes | jsonb | variavel | - | NULL | Dados adicionais do evento (before/after) |
+  | occurred_at | timestamp | - | NN | - | Momento real em que o evento ocorreu |
+  | created_at | timestamp | - | NN | now() | Momento de persistencia no audit-service |
+  Indices: INDEX(servico), INDEX(entidade, entidade_id), INDEX(usuario_id), INDEX(unidade_id), INDEX(occurred_at)
+end note
+
+T_CAIXA -[hidden]-> T_CONTA_A_RECEBER
+T_CONTA_A_RECEBER -[hidden]-> T_AUDITORIA
 
 @enduml

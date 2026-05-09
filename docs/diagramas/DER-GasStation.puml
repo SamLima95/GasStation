@@ -1,212 +1,331 @@
-@startuml
+@startuml DER-GasStation
+title GasStation - Diagrama Entidade-Relacionamento (DER)\nModelagem de Dados por Bounded Context
 hide circle
 skinparam linetype ortho
 skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
 
-entity "PERFIL" as PERFIL {
-  *id : uuid <<PK>>
-  --
-  nome : string
-  descricao : string
+legend right
+  <b>Convencoes</b>
+  <<PK>> = Chave primaria
+  <<FK>> = Chave estrangeira
+  * = Obrigatorio (NOT NULL)
+  ---
+  Tracejado = referencia entre bancos
+  (via ID, sem FK fisico)
+endlegend
+
+' ──────────────────────────────────────────
+'  IDENTITY SERVICE (identity_db)
+' ──────────────────────────────────────────
+package "Identity Service (identity_db)" as identity {
+
+  entity "USUARIO\n(users)" as USUARIO {
+    *id : uuid <<PK>>
+    --
+    *email : varchar <<UQ>>
+    *name : varchar
+    *role : varchar
+    *created_at : timestamp
+  }
+
+  entity "AUTH_CREDENTIAL\n(auth_credentials)" as AUTH_CREDENTIAL {
+    *id : uuid <<PK>>
+    --
+    *user_id : uuid <<FK>> <<UQ>>
+    *password_hash : varchar
+  }
+
+  entity "OAUTH_ACCOUNT\n(oauth_accounts)" as OAUTH_ACCOUNT {
+    *id : uuid <<PK>>
+    --
+    *user_id : uuid <<FK>>
+    *provider : varchar
+    *provider_id : varchar
+    *created_at : timestamp
+    ..
+    <<UQ>> (provider, provider_id)
+  }
+
+  entity "UNIDADE\n(unidades)" as UNIDADE {
+    *id : uuid <<PK>>
+    --
+    *nome : varchar
+    *tipo : varchar
+    *status : varchar
+    *created_at : timestamp
+  }
+
+  entity "USUARIO_UNIDADE\n(usuario_unidade)" as USUARIO_UNIDADE {
+    *id : uuid <<PK>>
+    --
+    *user_id : uuid <<FK>>
+    *unidade_id : uuid <<FK>>
+    *nivel : varchar
+    *created_at : timestamp
+    ..
+    <<UQ>> (user_id, unidade_id)
+  }
+
+  entity "CONFIGURACAO_UNIDADE\n(configuracao_unidade)" as CONFIGURACAO_UNIDADE {
+    *id : uuid <<PK>>
+    --
+    *unidade_id : uuid <<FK>>
+    *chave : varchar
+    *valor : varchar
+    *created_at : timestamp
+    ..
+    <<UQ>> (unidade_id, chave)
+  }
+
+  entity "OUTBOX\n(outbox)" as OUTBOX {
+    *id : uuid <<PK>>
+    --
+    *event_name : varchar
+    *payload : jsonb
+    *created_at : timestamp
+    published_at : timestamp
+  }
+
+  USUARIO ||--o| AUTH_CREDENTIAL : possui
+  USUARIO ||--o{ OAUTH_ACCOUNT : autentica
+  USUARIO ||--o{ USUARIO_UNIDADE : vincula
+  UNIDADE ||--o{ USUARIO_UNIDADE : autoriza
+  UNIDADE ||--o{ CONFIGURACAO_UNIDADE : parametriza
 }
 
-entity "USUARIO" as USUARIO {
-  *id : uuid <<PK>>
-  --
-  nome : string
-  email : string
-  senha_hash : string
-  ativo : boolean
-  criado_em : datetime
-  perfil_id : uuid <<FK>>
+' ──────────────────────────────────────────
+'  CATALOG SERVICE (catalog_db)
+' ──────────────────────────────────────────
+package "Catalog Service (catalog_db)" as catalog {
+
+  entity "ITEM\n(items)" as ITEM {
+    *id : uuid <<PK>>
+    --
+    *name : varchar
+    *price_amount : int
+    *price_currency : varchar
+    *created_at : timestamp
+  }
 }
 
-entity "UNIDADE" as UNIDADE {
-  *id : uuid <<PK>>
-  --
-  nome : string
-  tipo : string
-  ativa : boolean
+' ──────────────────────────────────────────
+'  ORDER SERVICE (order_db)
+' ──────────────────────────────────────────
+package "Order Service (order_db)" as order {
+
+  entity "CLIENTE\n(clientes)" as CLIENTE {
+    *id : uuid <<PK>>
+    --
+    *nome : varchar
+    *documento : varchar <<UQ>>
+    *limite_credito : decimal(12,2)
+    *saldo_devedor : decimal(12,2)
+    *unidade_id : uuid
+    *created_at : timestamp
+  }
+
+  entity "PEDIDO\n(pedidos)" as PEDIDO {
+    *id : uuid <<PK>>
+    --
+    *cliente_id : uuid <<FK>>
+    *unidade_id : uuid
+    *status : StatusPedido
+    *tipo_pagamento : TipoPagamento
+    *valor_total : decimal(12,2)
+    *data_pedido : timestamp
+    data_entrega_prevista : timestamp
+  }
+
+  entity "ITEM_PEDIDO\n(itens_pedido)" as ITEM_PEDIDO {
+    *id : uuid <<PK>>
+    --
+    *pedido_id : uuid <<FK>>
+    *vasilhame_id : uuid
+    *quantidade : int
+    *preco_unitario : decimal(12,2)
+  }
+
+  entity "NOTA_FISCAL\n(notas_fiscais)" as NOTA_FISCAL {
+    *id : uuid <<PK>>
+    --
+    *pedido_id : uuid <<FK>>
+    chave_acesso : varchar
+    *status : StatusNotaFiscal
+    *tentativas : int
+    mensagem : varchar
+    *created_at : timestamp
+  }
+
+  CLIENTE ||--o{ PEDIDO : realiza
+  PEDIDO ||--|{ ITEM_PEDIDO : contem
+  PEDIDO ||--o{ NOTA_FISCAL : gera
 }
 
-entity "USUARIO_UNIDADE" as USUARIO_UNIDADE {
-  *usuario_id : uuid <<FK>>
-  *unidade_id : uuid <<FK>>
-  --
-  nivel_acesso : string
+' ──────────────────────────────────────────
+'  STOCK SERVICE (stock_db)
+' ──────────────────────────────────────────
+package "Stock Service (stock_db)" as stock {
+
+  entity "VASILHAME\n(vasilhames)" as VASILHAME {
+    *id : uuid <<PK>>
+    --
+    *tipo : varchar
+    *descricao : varchar
+    *capacidade : float
+    *created_at : timestamp
+  }
+
+  entity "MOVIMENTACAO_ESTOQUE\n(movimentacoes_estoque)" as MOVIMENTACAO_ESTOQUE {
+    *id : uuid <<PK>>
+    --
+    *unidade_id : uuid
+    *vasilhame_id : uuid <<FK>>
+    *usuario_id : uuid
+    pedido_id : uuid
+    *tipo_movimentacao : TipoMovimentacao
+    *quantidade : int
+    *data_hora : timestamp
+  }
+
+  entity "COMODATO\n(comodatos)" as COMODATO {
+    *id : uuid <<PK>>
+    --
+    *cliente_id : uuid
+    *unidade_id : uuid
+    *vasilhame_id : uuid <<FK>>
+    *saldo_comodato : int
+    *atualizado_em : timestamp
+    ..
+    <<UQ>> (cliente_id, unidade_id, vasilhame_id)
+  }
+
+  VASILHAME ||--o{ MOVIMENTACAO_ESTOQUE : movimentado
+  VASILHAME ||--o{ COMODATO : vincula
 }
 
-entity "CLIENTE" as CLIENTE {
-  *id : uuid <<PK>>
-  --
-  nome : string
-  documento : string
-  limite_credito : decimal
-  saldo_devedor : decimal
-  unidade_id : uuid <<FK>>
+' ──────────────────────────────────────────
+'  LOGISTICS SERVICE (logistics_db)
+' ──────────────────────────────────────────
+package "Logistics Service (logistics_db)" as logistics {
+
+  entity "ENTREGADOR\n(entregadores)" as ENTREGADOR {
+    *id : uuid <<PK>>
+    --
+    *nome : varchar
+    *documento : varchar
+    *ativo : boolean
+    *unidade_id : uuid
+  }
+
+  entity "VEICULO\n(veiculos)" as VEICULO {
+    *id : uuid <<PK>>
+    --
+    *placa : varchar <<UQ>>
+    *modelo : varchar
+    *ativo : boolean
+    *unidade_id : uuid
+  }
+
+  entity "ROTA\n(rotas)" as ROTA {
+    *id : uuid <<PK>>
+    --
+    *unidade_id : uuid
+    *entregador_id : uuid <<FK>>
+    *veiculo_id : uuid <<FK>>
+    *data_rota : timestamp
+    *status : StatusRota
+  }
+
+  entity "ENTREGA\n(entregas)" as ENTREGA {
+    *id : uuid <<PK>>
+    --
+    rota_id : uuid <<FK>>
+    *pedido_id : uuid
+    *status : StatusEntrega
+    data_confirmacao : timestamp
+  }
+
+  ENTREGADOR ||--o{ ROTA : executa
+  VEICULO ||--o{ ROTA : utilizado
+  ROTA ||--o{ ENTREGA : agrega
 }
 
-entity "PEDIDO" as PEDIDO {
-  *id : uuid <<PK>>
-  --
-  cliente_id : uuid <<FK>>
-  unidade_id : uuid <<FK>>
-  status : string
-  valor_total : decimal
-  data_pedido : datetime
-  data_entrega_prevista : datetime
+' ──────────────────────────────────────────
+'  FINANCIAL SERVICE (financial_db)
+' ──────────────────────────────────────────
+package "Financial Service (financial_db)" as financial {
+
+  entity "CAIXA\n(caixas)" as CAIXA {
+    *id : uuid <<PK>>
+    --
+    *unidade_id : uuid
+    *data_abertura : timestamp
+    data_fechamento : timestamp
+    *status : StatusCaixa
+    *saldo_inicial : decimal(12,2)
+    saldo_final : decimal(12,2)
+  }
+
+  entity "CONTA_A_RECEBER\n(contas_a_receber)" as CONTA_A_RECEBER {
+    *id : uuid <<PK>>
+    --
+    *pedido_id : uuid
+    *cliente_id : uuid
+    caixa_id : uuid <<FK>>
+    *valor_original : decimal(12,2)
+    *valor_aberto : decimal(12,2)
+    *status : StatusContaAReceber
+    *vencimento : timestamp
+    *created_at : timestamp
+  }
+
+  CAIXA ||--o{ CONTA_A_RECEBER : baixa
 }
 
-entity "ITEM_PEDIDO" as ITEM_PEDIDO {
-  *id : uuid <<PK>>
-  --
-  pedido_id : uuid <<FK>>
-  vasilhame_id : uuid <<FK>>
-  quantidade : int
-  preco_unitario : decimal
+' ──────────────────────────────────────────
+'  AUDIT SERVICE (audit_db)
+' ──────────────────────────────────────────
+package "Audit Service (audit_db)" as audit {
+
+  entity "AUDITORIA\n(auditoria)" as AUDITORIA {
+    *id : uuid <<PK>>
+    --
+    *servico : varchar
+    *entidade : varchar
+    *entidade_id : uuid
+    *acao : varchar
+    usuario_id : uuid
+    unidade_id : uuid
+    detalhes : jsonb
+    *occurred_at : timestamp
+    *created_at : timestamp
+  }
 }
 
-entity "VASILHAME" as VASILHAME {
-  *id : uuid <<PK>>
-  --
-  tipo : string
-  descricao : string
-  capacidade : decimal
-}
+' ──────────────────────────────────────────
+'  REFERENCIAS ENTRE SERVICOS (cross-db)
+' ──────────────────────────────────────────
+UNIDADE ..> CLIENTE
+UNIDADE ..> PEDIDO
+UNIDADE ..> MOVIMENTACAO_ESTOQUE
+UNIDADE ..> COMODATO
+UNIDADE ..> ENTREGADOR
+UNIDADE ..> VEICULO
+UNIDADE ..> ROTA
+UNIDADE ..> CAIXA
+UNIDADE ..> AUDITORIA
 
-entity "MOVIMENTACAO_ESTOQUE" as MOVIMENTACAO_ESTOQUE {
-  *id : uuid <<PK>>
-  --
-  unidade_id : uuid <<FK>>
-  vasilhame_id : uuid <<FK>>
-  usuario_id : uuid <<FK>>
-  pedido_id : uuid <<FK>>
-  tipo_movimentacao : string
-  quantidade : int
-  data_hora : datetime
-}
+USUARIO ..> MOVIMENTACAO_ESTOQUE
+USUARIO ..> AUDITORIA
 
-entity "COMODATO" as COMODATO {
-  *id : uuid <<PK>>
-  --
-  cliente_id : uuid <<FK>>
-  unidade_id : uuid <<FK>>
-  vasilhame_id : uuid <<FK>>
-  saldo_comodato : int
-  atualizado_em : datetime
-}
+PEDIDO ..> ENTREGA
+PEDIDO ..> CONTA_A_RECEBER
+PEDIDO ..> MOVIMENTACAO_ESTOQUE
 
-entity "ROTA" as ROTA {
-  *id : uuid <<PK>>
-  --
-  unidade_id : uuid <<FK>>
-  entregador_id : uuid <<FK>>
-  data_rota : datetime
-  status : string
-}
+CLIENTE ..> COMODATO
+CLIENTE ..> CONTA_A_RECEBER
 
-entity "ENTREGA" as ENTREGA {
-  *id : uuid <<PK>>
-  --
-  rota_id : uuid <<FK>>
-  pedido_id : uuid <<FK>>
-  status : string
-  data_confirmacao : datetime
-}
-
-entity "ENTREGADOR" as ENTREGADOR {
-  *id : uuid <<PK>>
-  --
-  nome : string
-  documento : string
-  ativo : boolean
-  unidade_id : uuid <<FK>>
-}
-
-entity "VEICULO" as VEICULO {
-  *id : uuid <<PK>>
-  --
-  placa : string
-  modelo : string
-  ativo : boolean
-  unidade_id : uuid <<FK>>
-}
-
-entity "CAIXA" as CAIXA {
-  *id : uuid <<PK>>
-  --
-  unidade_id : uuid <<FK>>
-  data_abertura : date
-  data_fechamento : date
-  status : string
-}
-
-entity "CONTA_A_RECEBER" as CONTA_A_RECEBER {
-  *id : uuid <<PK>>
-  --
-  pedido_id : uuid <<FK>>
-  cliente_id : uuid <<FK>>
-  caixa_id : uuid <<FK>>
-  valor_original : decimal
-  valor_aberto : decimal
-  status : string
-  vencimento : date
-}
-
-entity "AUDITORIA" as AUDITORIA {
-  *id : uuid <<PK>>
-  --
-  entidade : string
-  entidade_id : uuid
-  usuario_id : uuid <<FK>>
-  unidade_id : uuid <<FK>>
-  data_hora : datetime
-  acao : string
-  alteracao : string
-}
-
-entity "CONFIGURACAO_UNIDADE" as CONFIGURACAO_UNIDADE {
-  *id : uuid <<PK>>
-  --
-  unidade_id : uuid <<FK>>
-  chave : string
-  valor : string
-  atualizado_em : datetime
-}
-
-PERFIL ||--o{ USUARIO : define
-USUARIO ||--o{ USUARIO_UNIDADE : possui
-UNIDADE ||--o{ USUARIO_UNIDADE : autoriza
-
-UNIDADE ||--o{ CLIENTE : atende
-CLIENTE ||--o{ PEDIDO : realiza
-UNIDADE ||--o{ PEDIDO : origina
-PEDIDO ||--|{ ITEM_PEDIDO : contem
-VASILHAME ||--o{ ITEM_PEDIDO : item
-
-UNIDADE ||--o{ MOVIMENTACAO_ESTOQUE : movimenta
-VASILHAME ||--o{ MOVIMENTACAO_ESTOQUE : movimentado
-USUARIO ||--o{ MOVIMENTACAO_ESTOQUE : registra
-PEDIDO ||--o{ MOVIMENTACAO_ESTOQUE : origem_opcional
-
-CLIENTE ||--o{ COMODATO : possui
-UNIDADE ||--o{ COMODATO : controla
-VASILHAME ||--o{ COMODATO : vincula
-
-UNIDADE ||--o{ ROTA : planeja
-ENTREGADOR ||--o{ ROTA : executa
-ROTA ||--|{ ENTREGA : agrega
-PEDIDO ||--o{ ENTREGA : gera
-UNIDADE ||--o{ ENTREGADOR : aloca
-UNIDADE ||--o{ VEICULO : disponibiliza
-
-UNIDADE ||--o{ CAIXA : mantem
-PEDIDO ||--o{ CONTA_A_RECEBER : gera
-CLIENTE ||--o{ CONTA_A_RECEBER : deve
-CAIXA ||--o{ CONTA_A_RECEBER : baixa
-
-USUARIO ||--o{ AUDITORIA : causa
-UNIDADE ||--o{ AUDITORIA : contextualiza
-UNIDADE ||--o{ CONFIGURACAO_UNIDADE : parametriza
+VASILHAME ..> ITEM_PEDIDO
 
 @enduml
