@@ -5,7 +5,9 @@
 import path from "path";
 import { config as loadEnv } from "dotenv";
 const packageRoot = path.resolve(__dirname, "../../..");
-loadEnv({ path: path.join(packageRoot, ".env") });
+const workspaceRoot = path.resolve(packageRoot, "../..");
+loadEnv({ path: path.join(workspaceRoot, ".env") });
+loadEnv({ path: path.join(packageRoot, ".env"), override: true });
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { createContainer } from "../../container";
@@ -14,10 +16,10 @@ import { createNoOpEventConsumer } from "./test-event-consumer";
 
 const databaseUrl =
   process.env.CATALOG_DATABASE_URL ??
-  "postgresql://lframework:lframework@localhost:5432/lframework";
-const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
+  "postgresql://lframework:lframework@localhost:5435/lframework";
+const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6381";
 const rabbitmqUrl =
-  process.env.RABBITMQ_URL ?? "amqp://lframework:lframework@localhost:5672";
+  process.env.RABBITMQ_URL ?? "amqp://lframework:lframework@localhost:5675";
 const jwtSecret =
   process.env.JWT_SECRET ?? "integration-test-secret-min-32-chars";
 

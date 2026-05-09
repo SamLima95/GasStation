@@ -13,6 +13,7 @@ Todos os arquivos com estrutura Markdown do projeto **GasStation**.
 | [IdeiaInicial.md](./IdeiaInicial.md) | Ideia inicial do projeto — sistema de gestão para distribuidora de gás, diferenciais e feedback do professor. |
 | [AnaliseRequisitos.md](./AnaliseRequisitos.md) | Análise de requisitos — consolidação de RF/RNF, stakeholders, escopo, rastreabilidade e próximos passos. |
 | [RegrasNegocio.md](./RegrasNegocio.md) | Regras de negócio — RN01–RN34 por área (estoque, vendas, comodato, financeiro, logística, RH/frota, holding, compliance). |
+| [BackupRestore.md](./BackupRestore.md) | Rotina de backup e restore dos bancos PostgreSQL. |
 
 ---
 

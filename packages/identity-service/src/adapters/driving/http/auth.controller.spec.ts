@@ -9,6 +9,9 @@ import type { OAuthCallbackUseCase } from "../../../application/use-cases/oauth-
 import type { RequestPasswordResetUseCase } from "../../../application/use-cases/request-password-reset.use-case";
 import type { ResetPasswordUseCase } from "../../../application/use-cases/reset-password.use-case";
 import type { LogoutUseCase } from "../../../application/use-cases/logout.use-case";
+import type { RefreshSessionUseCase } from "../../../application/use-cases/refresh-session.use-case";
+import type { ListSessionsUseCase } from "../../../application/use-cases/list-sessions.use-case";
+import type { RevokeSessionUseCase } from "../../../application/use-cases/revoke-session.use-case";
 import type { IAuditLogger } from "../../../application/ports/audit-logger.port";
 import type { IOAuthProvider } from "../../../application/ports/oauth-provider.port";
 import type { ICacheService } from "@lframework/shared";
@@ -30,6 +33,9 @@ describe("AuthController", () => {
   let requestPasswordResetUseCase: RequestPasswordResetUseCase;
   let resetPasswordUseCase: ResetPasswordUseCase;
   let logoutUseCase: LogoutUseCase;
+  let refreshSessionUseCase: RefreshSessionUseCase;
+  let listSessionsUseCase: ListSessionsUseCase;
+  let revokeSessionUseCase: RevokeSessionUseCase;
   let auditLogger: IAuditLogger;
   let googleProvider: IOAuthProvider | null;
   let githubProvider: IOAuthProvider | null;
@@ -60,6 +66,9 @@ describe("AuthController", () => {
     requestPasswordResetUseCase = { execute: vi.fn() } as unknown as RequestPasswordResetUseCase;
     resetPasswordUseCase = { execute: vi.fn() } as unknown as ResetPasswordUseCase;
     logoutUseCase = { execute: vi.fn() } as unknown as LogoutUseCase;
+    refreshSessionUseCase = { execute: vi.fn() } as unknown as RefreshSessionUseCase;
+    listSessionsUseCase = { execute: vi.fn() } as unknown as ListSessionsUseCase;
+    revokeSessionUseCase = { execute: vi.fn() } as unknown as RevokeSessionUseCase;
     auditLogger = { log: vi.fn().mockResolvedValue(undefined) };
     googleProvider = null;
     githubProvider = null;
@@ -84,6 +93,9 @@ describe("AuthController", () => {
       requestPasswordResetUseCase,
       resetPasswordUseCase,
       logoutUseCase,
+      refreshSessionUseCase,
+      listSessionsUseCase,
+      revokeSessionUseCase,
       auditLogger,
       googleProvider,
       githubProvider,
@@ -240,6 +252,9 @@ describe("AuthController", () => {
         requestPasswordResetUseCase,
         resetPasswordUseCase,
         logoutUseCase,
+        refreshSessionUseCase,
+        listSessionsUseCase,
+        revokeSessionUseCase,
         auditLogger,
         mockProvider,
         githubProvider,
@@ -298,6 +313,9 @@ describe("AuthController", () => {
         requestPasswordResetUseCase,
         resetPasswordUseCase,
         logoutUseCase,
+        refreshSessionUseCase,
+        listSessionsUseCase,
+        revokeSessionUseCase,
         auditLogger,
         mockProvider,
         githubProvider,
@@ -332,6 +350,9 @@ describe("AuthController", () => {
         requestPasswordResetUseCase,
         resetPasswordUseCase,
         logoutUseCase,
+        refreshSessionUseCase,
+        listSessionsUseCase,
+        revokeSessionUseCase,
         auditLogger,
         mockProvider,
         githubProvider,
@@ -368,6 +389,9 @@ describe("AuthController", () => {
         requestPasswordResetUseCase,
         resetPasswordUseCase,
         logoutUseCase,
+        refreshSessionUseCase,
+        listSessionsUseCase,
+        revokeSessionUseCase,
         auditLogger,
         mockProvider,
         githubProvider,

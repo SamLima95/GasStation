@@ -7,11 +7,15 @@ import type { OAuthCallbackUseCase } from "../../../application/use-cases/oauth-
 import type { RequestPasswordResetUseCase } from "../../../application/use-cases/request-password-reset.use-case";
 import type { ResetPasswordUseCase } from "../../../application/use-cases/reset-password.use-case";
 import type { LogoutUseCase } from "../../../application/use-cases/logout.use-case";
+import type { RefreshSessionUseCase } from "../../../application/use-cases/refresh-session.use-case";
+import type { ListSessionsUseCase } from "../../../application/use-cases/list-sessions.use-case";
+import type { RevokeSessionUseCase } from "../../../application/use-cases/revoke-session.use-case";
 import type { IAuditLogger } from "../../../application/ports/audit-logger.port";
 import type { IOAuthProvider } from "../../../application/ports/oauth-provider.port";
 import type { ICacheService } from "@lframework/shared";
 import type { RegisterDto } from "../../../application/dtos/register.dto";
 import type { LoginDto } from "../../../application/dtos/login.dto";
+import type { RefreshTokenDto } from "../../../application/dtos/refresh-token.dto";
 import type { ForgotPasswordDto, ResetPasswordDto } from "../../../application/dtos/password-reset.dto";
 import type { AuthResponseDto } from "../../../application/dtos/auth-response.dto";
 import type { OAuthCallbackResponseDto } from "../../../application/dtos/oauth-callback-response.dto";
@@ -32,6 +36,9 @@ export class AuthController {
     private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
     private readonly logoutUseCase: LogoutUseCase,
+    private readonly refreshSessionUseCase: RefreshSessionUseCase,
+    private readonly listSessionsUseCase: ListSessionsUseCase,
+    private readonly revokeSessionUseCase: RevokeSessionUseCase,
     private readonly auditLogger: IAuditLogger,
     private readonly googleProvider: IOAuthProvider | null,
     private readonly githubProvider: IOAuthProvider | null,
@@ -58,7 +65,13 @@ export class AuthController {
   login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const dto: LoginDto = req.body;
-      const result = await this.loginUseCase.execute(dto);
+      const headerUserAgent = req.headers["user-agent"];
+      const result = await this.loginUseCase.execute(dto, {
+        userAgent: typeof req.get === "function"
+          ? req.get("user-agent") ?? null
+          : Array.isArray(headerUserAgent) ? headerUserAgent.join(" ") : headerUserAgent ?? null,
+        ipAddress: req.ip,
+      });
       await this.auditLogger.log({
         entidade: "User",
         entidadeId: result.user.id,
@@ -72,6 +85,7 @@ export class AuthController {
         accessToken: result.accessToken,
         expiresIn: formatExpiresIn(this.jwtExpiresInSeconds),
       };
+      if (result.refreshToken) body.refreshToken = result.refreshToken;
       res.status(200).json(body);
     } catch (err) {
       const dto: Partial<LoginDto> = req.body ?? {};
@@ -83,6 +97,30 @@ export class AuthController {
         unidadeId: null,
         detalhes: { email: dto.email ?? null },
       });
+      next(err);
+    }
+  };
+
+  refresh = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const dto: RefreshTokenDto = req.body;
+      const result = await this.refreshSessionUseCase.execute(dto.refreshToken);
+      await this.auditLogger.log({
+        entidade: "User",
+        entidadeId: result.user.id,
+        acao: "auth.session.refreshed",
+        usuarioId: result.user.id,
+        unidadeId: null,
+        detalhes: null,
+      });
+      const body: AuthResponseDto = {
+        user: result.user,
+        accessToken: result.accessToken,
+        expiresIn: formatExpiresIn(this.jwtExpiresInSeconds),
+      };
+      if (result.refreshToken) body.refreshToken = result.refreshToken;
+      res.status(200).json(body);
+    } catch (err) {
       next(err);
     }
   };
@@ -143,6 +181,7 @@ export class AuthController {
       await this.logoutUseCase.execute({
         jti: authReq.userTokenId,
         exp: authReq.userTokenExpiresAt,
+        sessionId: authReq.userSessionId,
       });
       await this.auditLogger.log({
         entidade: "User",
@@ -150,7 +189,38 @@ export class AuthController {
         acao: "auth.logout",
         usuarioId: authReq.userId,
         unidadeId: null,
-        detalhes: { jti: authReq.userTokenId ?? null },
+        detalhes: { jti: authReq.userTokenId ?? null, sessionId: authReq.userSessionId ?? null },
+      });
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  sessions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const sessions = await this.listSessionsUseCase.execute(authReq.userId);
+      res.json(sessions);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  revokeSession = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      await this.revokeSessionUseCase.execute({
+        userId: authReq.userId,
+        sessionId: req.params.id,
+      });
+      await this.auditLogger.log({
+        entidade: "AuthSession",
+        entidadeId: req.params.id,
+        acao: "auth.session.revoked",
+        usuarioId: authReq.userId,
+        unidadeId: null,
+        detalhes: null,
       });
       res.status(204).send();
     } catch (err) {

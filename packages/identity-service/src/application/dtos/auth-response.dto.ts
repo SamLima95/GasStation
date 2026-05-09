@@ -11,5 +11,6 @@ export interface AuthUserDto {
 export interface AuthResponseDto {
   user: AuthUserDto;
   accessToken: string;
+  refreshToken?: string;
   expiresIn: string;
 }

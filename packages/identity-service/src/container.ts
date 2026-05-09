@@ -4,6 +4,7 @@ import Redis from "ioredis";
 import { RedisCacheAdapter, type ICacheService } from "@lframework/shared";
 import { PrismaUserRepository } from "./adapters/driven/persistence/prisma-user.repository";
 import { PrismaAuthCredentialRepository } from "./adapters/driven/persistence/prisma-auth-credential.repository";
+import { PrismaAuthSessionRepository } from "./adapters/driven/persistence/prisma-auth-session.repository";
 import { PrismaPasswordResetTokenRepository } from "./adapters/driven/persistence/prisma-password-reset-token.repository";
 import { PrismaUserRegistrationPersistence } from "./adapters/driven/persistence/prisma-user-registration.repository";
 import { PrismaUserOAuthRegistrationPersistence } from "./adapters/driven/persistence/prisma-user-oauth-registration.repository";
@@ -34,6 +35,9 @@ import { OAuthCallbackUseCase } from "./application/use-cases/oauth-callback.use
 import { RequestPasswordResetUseCase } from "./application/use-cases/request-password-reset.use-case";
 import { ResetPasswordUseCase } from "./application/use-cases/reset-password.use-case";
 import { LogoutUseCase } from "./application/use-cases/logout.use-case";
+import { RefreshSessionUseCase } from "./application/use-cases/refresh-session.use-case";
+import { ListSessionsUseCase } from "./application/use-cases/list-sessions.use-case";
+import { RevokeSessionUseCase } from "./application/use-cases/revoke-session.use-case";
 import { CreateUnidadeUseCase } from "./application/use-cases/create-unidade.use-case";
 import { ListUnidadesUseCase } from "./application/use-cases/list-unidades.use-case";
 import { GetUnidadeByIdUseCase } from "./application/use-cases/get-unidade-by-id.use-case";
@@ -62,6 +66,7 @@ export interface ContainerConfig {
   rabbitmqUrl: string;
   jwtSecret: string;
   jwtExpiresInSeconds: number;
+  refreshTokenTtlSeconds?: number;
   baseUrl: string;
   googleOAuth?: { clientId: string; clientSecret: string };
   githubOAuth?: { clientId: string; clientSecret: string };
@@ -79,6 +84,7 @@ interface IdentityCradle {
   cache: RedisCacheAdapter;
   userRepository: PrismaUserRepository;
   authCredentialRepository: PrismaAuthCredentialRepository;
+  authSessionRepository: PrismaAuthSessionRepository;
   passwordResetTokenRepository: PrismaPasswordResetTokenRepository;
   registrationPersistence: PrismaUserRegistrationPersistence;
   userOAuthRegistrationPersistence: PrismaUserOAuthRegistrationPersistence;
@@ -94,6 +100,7 @@ interface IdentityCradle {
   githubProvider: IOAuthProvider | null;
   baseUrl: string;
   jwtExpiresInSeconds: number;
+  refreshTokenTtlSeconds: number;
   userCreatedNotifier: UserCreatedNotifierAdapter;
   createUserUseCase: CreateUserUseCase;
   getUserByIdUseCase: GetUserByIdUseCase;
@@ -107,6 +114,9 @@ interface IdentityCradle {
   requestPasswordResetUseCase: RequestPasswordResetUseCase;
   resetPasswordUseCase: ResetPasswordUseCase;
   logoutUseCase: LogoutUseCase;
+  refreshSessionUseCase: RefreshSessionUseCase;
+  listSessionsUseCase: ListSessionsUseCase;
+  revokeSessionUseCase: RevokeSessionUseCase;
   createUnidadeUseCase: CreateUnidadeUseCase;
   listUnidadesUseCase: ListUnidadesUseCase;
   getUnidadeByIdUseCase: GetUnidadeByIdUseCase;
@@ -155,6 +165,10 @@ export function createContainer(config: ContainerConfig) {
     authCredentialRepository: asFunction(
       (cradle: IdentityCradle) =>
         new PrismaAuthCredentialRepository(cradle.prisma)
+    ).singleton(),
+    authSessionRepository: asFunction(
+      (cradle: IdentityCradle) =>
+        new PrismaAuthSessionRepository(cradle.prisma)
     ).singleton(),
     passwordResetTokenRepository: asFunction(
       (cradle: IdentityCradle) =>
@@ -219,6 +233,9 @@ export function createContainer(config: ContainerConfig) {
     jwtExpiresInSeconds: asFunction(
       ({ config }: { config: ContainerConfig }) => config.jwtExpiresInSeconds
     ).singleton(),
+    refreshTokenTtlSeconds: asFunction(
+      ({ config }: { config: ContainerConfig }) => config.refreshTokenTtlSeconds ?? 60 * 60 * 24 * 30
+    ).singleton(),
 
     userCreatedNotifier: asFunction(
       (cradle: IdentityCradle) =>
@@ -267,7 +284,9 @@ export function createContainer(config: ContainerConfig) {
           cradle.userRepository,
           cradle.authCredentialRepository,
           cradle.passwordHasher,
-          cradle.tokenService
+          cradle.tokenService,
+          cradle.authSessionRepository,
+          cradle.refreshTokenTtlSeconds
         )
     ).singleton(),
 
@@ -305,7 +324,25 @@ export function createContainer(config: ContainerConfig) {
     ).singleton(),
 
     logoutUseCase: asFunction(
-      (cradle: IdentityCradle) => new LogoutUseCase(cradle.cache)
+      (cradle: IdentityCradle) => new LogoutUseCase(cradle.cache, cradle.authSessionRepository)
+    ).singleton(),
+
+    refreshSessionUseCase: asFunction(
+      (cradle: IdentityCradle) =>
+        new RefreshSessionUseCase(
+          cradle.authSessionRepository,
+          cradle.userRepository,
+          cradle.tokenService,
+          cradle.refreshTokenTtlSeconds
+        )
+    ).singleton(),
+
+    listSessionsUseCase: asFunction(
+      (cradle: IdentityCradle) => new ListSessionsUseCase(cradle.authSessionRepository)
+    ).singleton(),
+
+    revokeSessionUseCase: asFunction(
+      (cradle: IdentityCradle) => new RevokeSessionUseCase(cradle.authSessionRepository)
     ).singleton(),
 
     createUnidadeUseCase: asFunction(
@@ -353,6 +390,9 @@ export function createContainer(config: ContainerConfig) {
           cradle.requestPasswordResetUseCase,
           cradle.resetPasswordUseCase,
           cradle.logoutUseCase,
+          cradle.refreshSessionUseCase,
+          cradle.listSessionsUseCase,
+          cradle.revokeSessionUseCase,
           cradle.auditLogger,
           cradle.googleProvider,
           cradle.githubProvider,
@@ -376,11 +416,21 @@ export function createContainer(config: ContainerConfig) {
     ).singleton(),
 
     authMiddleware: asFunction(
-      ({ tokenService, cache }: { tokenService: JwtTokenService; cache: ICacheService }) =>
+      ({
+        tokenService,
+        cache,
+        authSessionRepository,
+      }: {
+        tokenService: JwtTokenService;
+        cache: ICacheService;
+        authSessionRepository: PrismaAuthSessionRepository;
+      }) =>
         createAuthMiddleware((token) => tokenService.verify(token), {
           isRevoked: async (payload) => {
             if (!payload.jti) return false;
-            return Boolean(await cache.get<boolean>(`jwt:blacklist:${payload.jti}`));
+            if (await cache.get<boolean>(`jwt:blacklist:${payload.jti}`)) return true;
+            if (!payload.sid) return false;
+            return !(await authSessionRepository.isActive(payload.sid, new Date()));
           },
         })
     ).singleton(),

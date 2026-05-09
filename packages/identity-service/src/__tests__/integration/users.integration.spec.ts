@@ -6,7 +6,9 @@
 import path from "path";
 import { config as loadEnv } from "dotenv";
 const packageRoot = path.resolve(__dirname, "../../..");
-loadEnv({ path: path.join(packageRoot, ".env") });
+const workspaceRoot = path.resolve(packageRoot, "../..");
+loadEnv({ path: path.join(workspaceRoot, ".env") });
+loadEnv({ path: path.join(packageRoot, ".env"), override: true });
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import request from "supertest";
@@ -17,10 +19,10 @@ import { createNoOpCache } from "./test-cache";
 
 const databaseUrl =
   process.env.IDENTITY_DATABASE_URL ??
-  "postgresql://lframework:lframework@localhost:5432/lframework_identity";
-const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
+  "postgresql://lframework:lframework@localhost:5435/lframework_identity";
+const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6381";
 const rabbitmqUrl =
-  process.env.RABBITMQ_URL ?? "amqp://lframework:lframework@localhost:5672";
+  process.env.RABBITMQ_URL ?? "amqp://lframework:lframework@localhost:5675";
 
 describe("Users API integration", () => {
   const config = {
@@ -48,7 +50,9 @@ describe("Users API integration", () => {
     try {
       await container.prisma.$connect();
       await container.prisma.outboxModel.deleteMany({});
-      await container.prisma.userModel.deleteMany({});
+      await container.prisma.userModel.deleteMany({
+        where: { email: { endsWith: "@users-test.example.com" } },
+      });
       dbAvailable = true;
     } catch (err) {
       dbAvailable = false;
@@ -120,7 +124,7 @@ describe("Users API integration", () => {
     if (!dbAvailable) return;
     await container.prisma.userModel.deleteMany({
       where: {
-        email: { notIn: [ADMIN_EMAIL, REGULAR_EMAIL] },
+        email: { endsWith: "@users-test.example.com", notIn: [ADMIN_EMAIL, REGULAR_EMAIL] },
       },
     });
   });
@@ -130,7 +134,7 @@ describe("Users API integration", () => {
       if (!dbAvailable) skip();
       const res = await request(app)
         .post("/api/users")
-        .send({ email: "new@example.com", name: "New User" })
+        .send({ email: "new@users-test.example.com", name: "New User" })
         .expect(401);
       expect(res.body).toHaveProperty("error");
     });
@@ -140,7 +144,7 @@ describe("Users API integration", () => {
       const res = await request(app)
         .post("/api/users")
         .set("Authorization", "Bearer invalid-token")
-        .send({ email: "new@example.com", name: "New User" })
+        .send({ email: "new@users-test.example.com", name: "New User" })
         .expect(401);
       expect(res.body).toHaveProperty("error");
     });
@@ -150,7 +154,7 @@ describe("Users API integration", () => {
       const res = await request(app)
         .post("/api/users")
         .set("Authorization", `Bearer ${regularToken}`)
-        .send({ email: "other@example.com", name: "Other User" })
+        .send({ email: "other@users-test.example.com", name: "Other User" })
         .expect(403);
       expect(res.body).toHaveProperty("error", "Forbidden");
     });
@@ -160,11 +164,11 @@ describe("Users API integration", () => {
       const res = await request(app)
         .post("/api/users")
         .set("Authorization", `Bearer ${adminToken}`)
-        .send({ email: "created@example.com", name: "Created User" })
+        .send({ email: "created@users-test.example.com", name: "Created User" })
         .expect(201);
 
       expect(res.body).toMatchObject({
-        email: "created@example.com",
+        email: "created@users-test.example.com",
         name: "Created User",
       });
       expect(res.body).toHaveProperty("id");
@@ -178,12 +182,12 @@ describe("Users API integration", () => {
       await request(app)
         .post("/api/users")
         .set("Authorization", `Bearer ${adminToken}`)
-        .send({ email: "dup@example.com", name: "First" })
+        .send({ email: "dup@users-test.example.com", name: "First" })
         .expect(201);
       const res = await request(app)
         .post("/api/users")
         .set("Authorization", `Bearer ${adminToken}`)
-        .send({ email: "dup@example.com", name: "Duplicate" })
+        .send({ email: "dup@users-test.example.com", name: "Duplicate" })
         .expect(409);
       expect(res.body).toHaveProperty("error");
     });

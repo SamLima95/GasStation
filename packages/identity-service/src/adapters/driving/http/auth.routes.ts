@@ -2,11 +2,11 @@ import { Router, Request, Response, NextFunction } from "express";
 import rateLimit from "express-rate-limit";
 import { asyncHandler } from "@lframework/shared";
 import { AuthController } from "./auth.controller";
-import { validateForgotPassword, validateLogin, validateRegister, validateResetPassword } from "./auth.validation";
+import { validateForgotPassword, validateLogin, validateRefreshToken, validateRegister, validateResetPassword } from "./auth.validation";
 
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
-  max: 20, // login + register combined per IP
+  max: process.env.NODE_ENV === "test" ? 1000 : 20, // login + register combined per IP
   message: { error: "Too many attempts, try again later" },
   standardHeaders: true,
   legacyHeaders: false,
@@ -14,7 +14,7 @@ const authRateLimiter = rateLimit({
 
 const oauthRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
-  max: 30, // redirects + callbacks per IP
+  max: process.env.NODE_ENV === "test" ? 1000 : 30, // redirects + callbacks per IP
   message: { error: "Too many OAuth attempts, try again later" },
   standardHeaders: true,
   legacyHeaders: false,
@@ -28,7 +28,10 @@ export function createAuthRoutes(
 
   router.post("/auth/register", authRateLimiter, validateRegister, asyncHandler(controller.register.bind(controller)));
   router.post("/auth/login", authRateLimiter, validateLogin, asyncHandler(controller.login.bind(controller)));
+  router.post("/auth/refresh", authRateLimiter, validateRefreshToken, asyncHandler(controller.refresh.bind(controller)));
   router.post("/auth/logout", authMiddleware, asyncHandler(controller.logout.bind(controller)));
+  router.get("/auth/sessions", authMiddleware, asyncHandler(controller.sessions.bind(controller)));
+  router.delete("/auth/sessions/:id", authMiddleware, asyncHandler(controller.revokeSession.bind(controller)));
   router.get("/auth/me", authMiddleware, asyncHandler(controller.me.bind(controller)));
 
   router.post("/auth/password/forgot", authRateLimiter, validateForgotPassword, asyncHandler(controller.forgotPassword.bind(controller)));

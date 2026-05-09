@@ -44,6 +44,11 @@ if (!Number.isInteger(jwtExpiresInSeconds) || jwtExpiresInSeconds < 1) {
   logger.error("JWT_EXPIRES_IN_SECONDS must be a positive integer");
   process.exit(1);
 }
+const refreshTokenTtlSeconds = parseInt(process.env.REFRESH_TOKEN_TTL_SECONDS ?? String(60 * 60 * 24 * 30), 10);
+if (!Number.isInteger(refreshTokenTtlSeconds) || refreshTokenTtlSeconds < 1) {
+  logger.error("REFRESH_TOKEN_TTL_SECONDS must be a positive integer");
+  process.exit(1);
+}
 const baseUrl = process.env.BASE_URL ?? `http://localhost:${port}`;
 
 if (isProduction && (!jwtSecret || jwtSecret.length < 32)) {
@@ -65,6 +70,7 @@ async function bootstrap() {
     rabbitmqUrl,
     jwtSecret,
     jwtExpiresInSeconds,
+    refreshTokenTtlSeconds,
     baseUrl,
     googleOAuth,
     githubOAuth,

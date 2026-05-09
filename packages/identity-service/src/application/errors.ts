@@ -60,3 +60,11 @@ export class UserNotFoundError extends AppError {
     Object.setPrototypeOf(this, UserNotFoundError.prototype);
   }
 }
+
+export class SessionNotFoundError extends AppError {
+  override name = "SessionNotFoundError";
+  constructor(message = "Session not found") {
+    super(message);
+    Object.setPrototypeOf(this, SessionNotFoundError.prototype);
+  }
+}

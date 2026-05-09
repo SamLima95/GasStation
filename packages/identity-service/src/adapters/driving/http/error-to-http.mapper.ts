@@ -7,6 +7,7 @@ import {
   UnidadeNotFoundError,
   UserAlreadyLinkedError,
   UserNotFoundError,
+  SessionNotFoundError,
 } from "../../../application/errors";
 
 /**
@@ -21,4 +22,5 @@ export const mapApplicationErrorToHttp = createErrorToHttpMapper([
   [UnidadeNotFoundError, 404],
   [UserAlreadyLinkedError, 409],
   [UserNotFoundError, 404],
+  [SessionNotFoundError, 404],
 ]);

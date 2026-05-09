@@ -19,6 +19,7 @@ extendZodWithOpenApi(z);
 const ErrorSchema = z.object({ error: z.string(), message: z.string() }).openapi("Error");
 const RegisterBodySchema = registerSchema.openapi("RegisterBody");
 const LoginBodySchema = loginSchema.openapi("LoginBody");
+const RefreshTokenBodySchema = z.object({ refreshToken: z.string() }).openapi("RefreshTokenBody");
 const ForgotPasswordBodySchema = forgotPasswordSchema.openapi("ForgotPasswordBody");
 const ResetPasswordBodySchema = resetPasswordSchema.openapi("ResetPasswordBody");
 const UserResponseSchema = userResponseDtoSchema.openapi("UserResponse");
@@ -26,9 +27,21 @@ const AuthResponseSchema = z
   .object({
     user: UserResponseSchema,
     accessToken: z.string(),
+    refreshToken: z.string().optional(),
     expiresIn: z.string(),
   })
   .openapi("AuthResponse");
+const SessionSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  userAgent: z.string().nullable(),
+  ipAddress: z.string().nullable(),
+  createdAt: z.string(),
+  expiresAt: z.string(),
+  revokedAt: z.string().nullable(),
+  lastUsedAt: z.string().nullable(),
+  active: z.boolean(),
+}).openapi("AuthSession");
 const CreateUserBodySchema = createUserSchema.openapi("CreateUserBody");
 const UpdateUserBodySchema = updateUserSchema.openapi("UpdateUserBody");
 const OAuthQuerySchema = z.object({ code: z.string(), state: z.string() });
@@ -79,6 +92,26 @@ registry.registerPath({
 });
 
 registry.registerPath({
+  method: "post",
+  path: "/api/auth/refresh",
+  summary: "Renovar sessão com refresh token",
+  tags: ["Auth"],
+  request: {
+    body: {
+      content: { "application/json": { schema: RefreshTokenBodySchema } },
+    },
+  },
+  responses: {
+    200: {
+      description: "Novo par de tokens",
+      content: { "application/json": { schema: AuthResponseSchema } },
+    },
+    400: { description: "Validação", content: { "application/json": { schema: ErrorSchema } } },
+    401: { description: "Refresh token inválido ou expirado", content: { "application/json": { schema: ErrorSchema } } },
+  },
+});
+
+registry.registerPath({
   method: "get",
   path: "/api/auth/me",
   summary: "Usuário atual (JWT)",
@@ -101,9 +134,40 @@ registry.registerPath({
 });
 
 registry.registerPath({
+  method: "get",
+  path: "/api/auth/sessions",
+  summary: "Listar sessões do usuário autenticado",
+  tags: ["Auth"],
+  security: [{ bearerAuth: [] }],
+  responses: {
+    200: {
+      description: "Sessões",
+      content: { "application/json": { schema: z.array(SessionSchema) } },
+    },
+    401: { description: "Não autenticado", content: { "application/json": { schema: ErrorSchema } } },
+  },
+});
+
+registry.registerPath({
+  method: "delete",
+  path: "/api/auth/sessions/{id}",
+  summary: "Revogar uma sessão do usuário autenticado",
+  tags: ["Auth"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: {
+    204: { description: "Sessão revogada" },
+    401: { description: "Não autenticado", content: { "application/json": { schema: ErrorSchema } } },
+    404: { description: "Sessão não encontrada", content: { "application/json": { schema: ErrorSchema } } },
+  },
+});
+
+registry.registerPath({
   method: "post",
   path: "/api/auth/logout",
-  summary: "Logout com revogação do token atual",
+  summary: "Logout com revogação do token atual e da sessão",
   tags: ["Auth"],
   security: [{ bearerAuth: [] }],
   responses: {

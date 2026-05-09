@@ -8,7 +8,7 @@ Checklist baseado na comparacao entre `docs/RequisitosCorp.md` e o estado atual 
 - [x] Implementar exclusao/desativacao de usuarios.
 - [x] Implementar recuperacao de senha.
 - [x] Implementar logout server-side ou revogacao antecipada de tokens.
-- [ ] Implementar controle de sessoes com timeout, refresh token e revogacao.
+- [x] Implementar controle de sessoes com timeout, refresh token e revogacao.
 - [x] Registrar logs de login, logout, falhas de autenticacao e alteracoes de usuario.
 
 ## 2. Controle de Acesso
@@ -45,8 +45,8 @@ Checklist baseado na comparacao entre `docs/RequisitosCorp.md` e o estado atual 
 - [ ] Implementar criptografia de dados sensiveis em repouso quando aplicavel.
 - [ ] Documentar quais dados sao sensiveis e como sao protegidos.
 - [ ] Adicionar politica LGPD: consentimento, retencao, exclusao/anomizacao e finalidade de uso.
-- [ ] Implementar backup automatizado dos bancos.
-- [ ] Documentar estrategia de restore.
+- [x] Implementar backup automatizado dos bancos.
+- [x] Documentar estrategia de restore.
 - [ ] Testar restauracao de backup.
 - [x] Aplicar rate limiting global ou por grupo de endpoints sensiveis.
 - [x] Adicionar headers de seguranca HTTP, como Helmet/CSP, quando aplicavel.

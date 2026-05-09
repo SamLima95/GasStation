@@ -6,12 +6,14 @@ import type { IUserRepository } from "../ports/user-repository.port";
 import type { IAuthCredentialRepository } from "../ports/auth-credential-repository.port";
 import type { IPasswordHasher } from "../ports/password-hasher.port";
 import type { ITokenService } from "../ports/token-service.port";
+import type { IAuthSessionRepository } from "../ports/auth-session-repository.port";
 
 describe("LoginUseCase", () => {
   let userRepository: IUserRepository;
   let authCredentialRepository: IAuthCredentialRepository;
   let passwordHasher: IPasswordHasher;
   let tokenService: ITokenService;
+  let sessionRepository: IAuthSessionRepository;
 
   beforeEach(() => {
     userRepository = {
@@ -32,6 +34,26 @@ describe("LoginUseCase", () => {
       sign: vi.fn().mockReturnValue("fake-jwt-token"),
       verify: vi.fn(),
     };
+    sessionRepository = {
+      create: vi.fn().mockResolvedValue({
+        id: "session-1",
+        userId: "user-1",
+        refreshTokenHash: "hash",
+        userAgent: null,
+        ipAddress: null,
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 1000),
+        revokedAt: null,
+        lastUsedAt: null,
+      }),
+      findActiveByRefreshTokenHash: vi.fn(),
+      findById: vi.fn(),
+      listByUserId: vi.fn(),
+      replaceRefreshToken: vi.fn(),
+      revoke: vi.fn(),
+      revokeAllForUser: vi.fn(),
+      isActive: vi.fn(),
+    };
   });
 
   it("deve retornar user e accessToken quando credenciais são válidas", async () => {
@@ -50,7 +72,9 @@ describe("LoginUseCase", () => {
       userRepository,
       authCredentialRepository,
       passwordHasher,
-      tokenService
+      tokenService,
+      sessionRepository,
+      2_592_000
     );
     const result = await useCase.execute({ email: "u@example.com", password: "senha123" });
 
@@ -60,10 +84,19 @@ describe("LoginUseCase", () => {
       name: "Nome",
     });
     expect(result.accessToken).toBe("fake-jwt-token");
+    expect(result.refreshToken).toEqual(expect.any(String));
+    expect(sessionRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user-1",
+        refreshTokenHash: expect.any(String),
+        expiresAt: expect.any(Date),
+      })
+    );
     expect(tokenService.sign).toHaveBeenCalledWith({
       sub: "user-1",
       email: "u@example.com",
       role: "user",
+      sid: "session-1",
     });
   });
 
@@ -74,7 +107,9 @@ describe("LoginUseCase", () => {
       userRepository,
       authCredentialRepository,
       passwordHasher,
-      tokenService
+      tokenService,
+      sessionRepository,
+      2_592_000
     );
 
     await expect(
@@ -95,7 +130,9 @@ describe("LoginUseCase", () => {
       userRepository,
       authCredentialRepository,
       passwordHasher,
-      tokenService
+      tokenService,
+      sessionRepository,
+      2_592_000
     );
 
     await expect(
@@ -114,7 +151,9 @@ describe("LoginUseCase", () => {
       userRepository,
       authCredentialRepository,
       passwordHasher,
-      tokenService
+      tokenService,
+      sessionRepository,
+      2_592_000
     );
 
     await expect(

@@ -9,6 +9,7 @@ const jwtPayloadSchema = z.object({
   sub: z.string().min(1),
   email: z.string().optional(),
   role: z.string().optional(),
+  sid: z.string().optional(),
   jti: z.string().optional(),
   exp: z.number(),
   iat: z.number(),
@@ -26,9 +27,9 @@ export class JwtTokenService implements ITokenService {
   constructor(private readonly config: JwtTokenServiceConfig) {}
 
   sign(payload: Omit<TokenPayload, "iat" | "exp">): string {
-    const { sub, email, role } = payload;
+    const { sub, email, role, sid } = payload;
     return jwt.sign(
-      { sub, email, role: role ?? "user", jti: payload.jti ?? randomUUID() },
+      { sub, email, role: role ?? "user", sid, jti: payload.jti ?? randomUUID() },
       this.config.secret,
       { expiresIn: this.config.expiresInSeconds, algorithm: "HS256" }
     );
@@ -49,6 +50,7 @@ export class JwtTokenService implements ITokenService {
         sub: data.sub,
         email: data.email ?? "",
         role: data.role ?? "user",
+        sid: data.sid,
         jti: data.jti,
         iat: data.iat,
         exp: data.exp,

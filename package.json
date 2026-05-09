@@ -23,6 +23,8 @@
     "docker:down": "docker compose down",
     "docker:fresh": "docker compose down -v && docker compose up -d",
     "migrate:all": "bash scripts/migrate-all.sh",
+    "backup:postgres": "bash scripts/backup-postgres.sh",
+    "restore:postgres": "bash scripts/restore-postgres.sh",
     "load-test": "tsx scripts/load-test.ts"
   },
   "engines": {

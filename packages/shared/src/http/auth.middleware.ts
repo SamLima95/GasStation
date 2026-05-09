@@ -9,6 +9,7 @@ export interface JwtPayload {
   sub: string;
   email?: string;
   role?: string;
+  sid?: string;
   jti?: string;
   exp?: number;
 }
@@ -26,6 +27,7 @@ declare global {
       userRole?: string;
       userPermissions?: string[];
       userTokenId?: string;
+      userSessionId?: string;
       userTokenExpiresAt?: number;
       authToken?: string;
     }
@@ -41,6 +43,7 @@ export type AuthenticatedRequest = Request & {
   userRole?: string;
   userPermissions?: string[];
   userTokenId?: string;
+  userSessionId?: string;
   userTokenExpiresAt?: number;
   authToken?: string;
 };
@@ -73,6 +76,7 @@ export function createAuthMiddleware(
       req.userId = payload.sub;
       req.userEmail = payload.email;
       req.userRole = payload.role ?? "user";
+      req.userSessionId = payload.sid;
       req.userTokenId = payload.jti;
       req.userTokenExpiresAt = payload.exp;
       req.authToken = token;

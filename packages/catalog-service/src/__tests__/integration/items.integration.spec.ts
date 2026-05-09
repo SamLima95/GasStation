@@ -3,12 +3,14 @@
  * Require PostgreSQL. Redis and RabbitMQ are not required (tests use no-op cache and event consumer).
  * Run with: pnpm test:integration
  * If the database is not available, the suite is skipped (no failure).
- * To run against a real DB: copy .env.example to .env, create DB and run pnpm prisma:migrate.
+ * To run against a real DB: copy the workspace .env.example to .env and run pnpm migrate:all.
  */
 import path from "path";
 import { config as loadEnv } from "dotenv";
 const packageRoot = path.resolve(__dirname, "../../..");
-loadEnv({ path: path.join(packageRoot, ".env") });
+const workspaceRoot = path.resolve(packageRoot, "../..");
+loadEnv({ path: path.join(workspaceRoot, ".env") });
+loadEnv({ path: path.join(packageRoot, ".env"), override: true });
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import request from "supertest";
@@ -20,10 +22,10 @@ import { createNoOpEventConsumer } from "./test-event-consumer";
 
 const databaseUrl =
   process.env.CATALOG_DATABASE_URL ??
-  "postgresql://lframework:lframework@localhost:5432/lframework";
-const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
+  "postgresql://lframework:lframework@localhost:5435/lframework";
+const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6381";
 const rabbitmqUrl =
-  process.env.RABBITMQ_URL ?? "amqp://lframework:lframework@localhost:5672";
+  process.env.RABBITMQ_URL ?? "amqp://lframework:lframework@localhost:5675";
 const jwtSecret =
   process.env.JWT_SECRET ?? "integration-test-secret-min-32-chars-for-jwt";
 
@@ -77,7 +79,7 @@ describe("Catalog API integration", () => {
 
   function validToken(): string {
     return jwt.sign(
-      { sub: "test-user-id" },
+      { sub: "test-user-id", role: "admin" },
       config.jwtSecret,
       { algorithm: "HS256" }
     );

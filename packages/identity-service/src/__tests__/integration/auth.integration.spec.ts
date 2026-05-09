@@ -3,13 +3,14 @@
  * Require PostgreSQL. Redis and RabbitMQ are not required (tests use no-op cache and event publisher).
  * Run with: pnpm test:integration
  * If the database is not available, the suite is skipped (no failure).
- * To run against a real DB: copy .env.example to .env, create DB and run pnpm prisma:migrate.
+ * To run against a real DB: copy the workspace .env.example to .env and run pnpm migrate:all.
  */
 import path from "path";
 import { config as loadEnv } from "dotenv";
-// Load .env from package root (reliable regardless of Vitest worker cwd)
 const packageRoot = path.resolve(__dirname, "../../..");
-loadEnv({ path: path.join(packageRoot, ".env") });
+const workspaceRoot = path.resolve(packageRoot, "../..");
+loadEnv({ path: path.join(workspaceRoot, ".env") });
+loadEnv({ path: path.join(packageRoot, ".env"), override: true });
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import request from "supertest";
@@ -20,10 +21,24 @@ import { createNoOpCache } from "./test-cache";
 
 const databaseUrl =
   process.env.IDENTITY_DATABASE_URL ??
-  "postgresql://lframework:lframework@localhost:5432/lframework_identity";
-const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
+  "postgresql://lframework:lframework@localhost:5435/lframework_identity";
+const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6381";
 const rabbitmqUrl =
-  process.env.RABBITMQ_URL ?? "amqp://lframework:lframework@localhost:5672";
+  process.env.RABBITMQ_URL ?? "amqp://lframework:lframework@localhost:5675";
+const AUTH_TEST_EMAILS = [
+  "alice@example.com",
+  "bob@example.com",
+  "user@example.com",
+  "login@example.com",
+  "wrongpass@example.com",
+  "unknown@example.com",
+  "a@b.com",
+  "me@example.com",
+  "deleted@example.com",
+  "refresh@example.com",
+  "sessions@example.com",
+  "logout@example.com",
+];
 
 describe("Auth API integration", () => {
   const config = {
@@ -61,7 +76,9 @@ describe("Auth API integration", () => {
     }
     try {
       await container.prisma.$connect();
-      await container.prisma.userModel.deleteMany({});
+      await container.prisma.userModel.deleteMany({
+        where: { email: { in: AUTH_TEST_EMAILS } },
+      });
       dbAvailable = true;
     } catch (err) {
       dbAvailable = false;
@@ -92,7 +109,9 @@ describe("Auth API integration", () => {
 
   beforeEach(async () => {
     if (!dbAvailable) return;
-    await container.prisma.userModel.deleteMany({});
+    await container.prisma.userModel.deleteMany({
+      where: { email: { in: AUTH_TEST_EMAILS } },
+    });
   });
 
   describe("POST /api/auth/register", () => {
@@ -215,9 +234,47 @@ describe("Auth API integration", () => {
           name: "Login User",
         },
         accessToken: expect.any(String),
+        refreshToken: expect.any(String),
         expiresIn: expect.any(String),
       });
       expect(res.body.user).toHaveProperty("id");
+    });
+
+    it("rotates refresh token and rejects the previous refresh token", async ({ skip }) => {
+      if (!servicesAvailable()) skip();
+      await request(app)
+        .post("/api/auth/register")
+        .send({
+          email: "refresh@example.com",
+          name: "Refresh User",
+          password: "MyPassword123",
+        })
+        .expect(201);
+
+      const loginRes = await request(app)
+        .post("/api/auth/login")
+        .send({
+          email: "refresh@example.com",
+          password: "MyPassword123",
+        })
+        .expect(200);
+
+      const refreshToken = loginRes.body.refreshToken;
+      const refreshRes = await request(app)
+        .post("/api/auth/refresh")
+        .send({ refreshToken })
+        .expect(200);
+
+      expect(refreshRes.body).toMatchObject({
+        accessToken: expect.any(String),
+        refreshToken: expect.any(String),
+      });
+      expect(refreshRes.body.refreshToken).not.toBe(refreshToken);
+
+      await request(app)
+        .post("/api/auth/refresh")
+        .send({ refreshToken })
+        .expect(401);
     });
 
     it("returns 401 for wrong password", async ({ skip }) => {
@@ -271,6 +328,77 @@ describe("Auth API integration", () => {
         .send({ email: "a@b.com" })
         .expect(400);
       expect(res.body).toHaveProperty("error");
+    });
+  });
+
+  describe("session management", () => {
+    it("lists sessions and revokes a selected session", async ({ skip }) => {
+      if (!servicesAvailable()) skip();
+      await request(app)
+        .post("/api/auth/register")
+        .send({
+          email: "sessions@example.com",
+          name: "Sessions User",
+          password: "MyPassword123",
+        })
+        .expect(201);
+
+      const loginRes = await request(app)
+        .post("/api/auth/login")
+        .send({
+          email: "sessions@example.com",
+          password: "MyPassword123",
+        })
+        .expect(200);
+      const token = loginRes.body.accessToken;
+
+      const sessionsRes = await request(app)
+        .get("/api/auth/sessions")
+        .set("Authorization", `Bearer ${token}`)
+        .expect(200);
+
+      expect(sessionsRes.body).toHaveLength(1);
+      expect(sessionsRes.body[0]).toMatchObject({ active: true });
+
+      await request(app)
+        .delete(`/api/auth/sessions/${sessionsRes.body[0].id}`)
+        .set("Authorization", `Bearer ${token}`)
+        .expect(204);
+
+      await request(app)
+        .get("/api/auth/me")
+        .set("Authorization", `Bearer ${token}`)
+        .expect(401);
+    });
+
+    it("logout revokes the current session", async ({ skip }) => {
+      if (!servicesAvailable()) skip();
+      await request(app)
+        .post("/api/auth/register")
+        .send({
+          email: "logout@example.com",
+          name: "Logout User",
+          password: "MyPassword123",
+        })
+        .expect(201);
+
+      const loginRes = await request(app)
+        .post("/api/auth/login")
+        .send({
+          email: "logout@example.com",
+          password: "MyPassword123",
+        })
+        .expect(200);
+
+      await request(app)
+        .post("/api/auth/logout")
+        .set("Authorization", `Bearer ${loginRes.body.accessToken}`)
+        .expect(204);
+
+      await request(app)
+        .post("/api/auth/refresh")
+        .send({ refreshToken: loginRes.body.refreshToken })
+        .expect(401);
     });
   });
 

@@ -5,7 +5,9 @@
 import path from "path";
 import { config as loadEnv } from "dotenv";
 const packageRoot = path.resolve(__dirname, "../../..");
-loadEnv({ path: path.join(packageRoot, ".env") });
+const workspaceRoot = path.resolve(packageRoot, "../..");
+loadEnv({ path: path.join(workspaceRoot, ".env") });
+loadEnv({ path: path.join(packageRoot, ".env"), override: true });
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
@@ -18,10 +20,14 @@ import { USER_CREATED_EVENT } from "@lframework/shared";
 
 const databaseUrl =
   process.env.IDENTITY_DATABASE_URL ??
-  "postgresql://lframework:lframework@localhost:5432/lframework_identity";
-const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
+  "postgresql://lframework:lframework@localhost:5435/lframework_identity";
+const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6381";
 const rabbitmqUrl =
-  process.env.RABBITMQ_URL ?? "amqp://lframework:lframework@localhost:5672";
+  process.env.RABBITMQ_URL ?? "amqp://lframework:lframework@localhost:5675";
+const OUTBOX_TEST_EMAILS = [
+  "outbox-register@example.com",
+  "relay-publish@example.com",
+];
 
 describe("Outbox integration", () => {
   const config = {
@@ -47,7 +53,9 @@ describe("Outbox integration", () => {
     try {
       await container.prisma.$connect();
       await container.prisma.outboxModel.deleteMany({});
-      await container.prisma.userModel.deleteMany({});
+      await container.prisma.userModel.deleteMany({
+        where: { email: { in: OUTBOX_TEST_EMAILS } },
+      });
       dbAvailable = true;
     } catch (err) {
       dbAvailable = false;
