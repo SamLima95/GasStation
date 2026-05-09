@@ -49,7 +49,10 @@ export class CreateUserUseCase {
       id: user.id,
       email: user.email.value,
       name: user.name,
+      role: user.role,
+      status: user.status,
       createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
     };
     return result;
   }

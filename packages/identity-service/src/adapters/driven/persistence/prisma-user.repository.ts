@@ -26,12 +26,14 @@ export class PrismaUserRepository implements IUserRepository {
           email: user.email.value,
           name: user.name,
           role: user.role,
+          status: user.status,
           createdAt: user.createdAt,
         },
         update: {
           email: user.email.value,
           name: user.name,
           role: user.role,
+          status: user.status,
         },
       });
     } catch (err) {
@@ -52,12 +54,14 @@ export class PrismaUserRepository implements IUserRepository {
             email: user.email.value,
             name: user.name,
             role: user.role,
+            status: user.status,
             createdAt: user.createdAt,
           },
           update: {
             email: user.email.value,
             name: user.name,
             role: user.role,
+            status: user.status,
           },
         }),
         this.prisma.outboxModel.create({
@@ -82,7 +86,7 @@ export class PrismaUserRepository implements IUserRepository {
       where: { id },
     });
     if (!row) return null;
-    return User.reconstitute(row.id, row.email, row.name, row.createdAt, row.role);
+    return User.reconstitute(row.id, row.email, row.name, row.createdAt, row.role, row.status, row.updatedAt);
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -90,6 +94,15 @@ export class PrismaUserRepository implements IUserRepository {
       where: { email },
     });
     if (!row) return null;
-    return User.reconstitute(row.id, row.email, row.name, row.createdAt, row.role);
+    return User.reconstitute(row.id, row.email, row.name, row.createdAt, row.role, row.status, row.updatedAt);
+  }
+
+  async listPermissionsByRole(role: string): Promise<string[]> {
+    const rows = await this.prisma.rolePermissionModel.findMany({
+      where: { role },
+      select: { permission: true },
+      orderBy: { permission: "asc" },
+    });
+    return rows.map((row) => row.permission);
   }
 }

@@ -21,6 +21,9 @@ import { GitHubOAuthProvider } from "./adapters/driven/auth/github-oauth.provide
 import type { IOAuthProvider } from "./application/ports/oauth-provider.port";
 import { CreateUserUseCase } from "./application/use-cases/create-user.use-case";
 import { GetUserByIdUseCase } from "./application/use-cases/get-user-by-id.use-case";
+import { UpdateUserUseCase } from "./application/use-cases/update-user.use-case";
+import { DeactivateUserUseCase } from "./application/use-cases/deactivate-user.use-case";
+import { ListRolePermissionsUseCase } from "./application/use-cases/list-role-permissions.use-case";
 import { RegisterUseCase } from "./application/use-cases/register.use-case";
 import { LoginUseCase } from "./application/use-cases/login.use-case";
 import { GetCurrentUserUseCase } from "./application/use-cases/get-current-user.use-case";
@@ -86,6 +89,9 @@ interface IdentityCradle {
   userCreatedNotifier: UserCreatedNotifierAdapter;
   createUserUseCase: CreateUserUseCase;
   getUserByIdUseCase: GetUserByIdUseCase;
+  updateUserUseCase: UpdateUserUseCase;
+  deactivateUserUseCase: DeactivateUserUseCase;
+  listRolePermissionsUseCase: ListRolePermissionsUseCase;
   registerUseCase: RegisterUseCase;
   loginUseCase: LoginUseCase;
   getCurrentUserUseCase: GetCurrentUserUseCase;
@@ -210,6 +216,21 @@ export function createContainer(config: ContainerConfig) {
         new GetUserByIdUseCase(cradle.userRepository, cradle.cache)
     ).singleton(),
 
+    updateUserUseCase: asFunction(
+      (cradle: IdentityCradle) =>
+        new UpdateUserUseCase(cradle.userRepository, cradle.cache)
+    ).singleton(),
+
+    deactivateUserUseCase: asFunction(
+      (cradle: IdentityCradle) =>
+        new DeactivateUserUseCase(cradle.userRepository, cradle.cache)
+    ).singleton(),
+
+    listRolePermissionsUseCase: asFunction(
+      (cradle: IdentityCradle) =>
+        new ListRolePermissionsUseCase(cradle.userRepository)
+    ).singleton(),
+
     registerUseCase: asFunction(
       (cradle: IdentityCradle) =>
         new RegisterUseCase(
@@ -273,7 +294,12 @@ export function createContainer(config: ContainerConfig) {
 
     userController: asFunction(
       (cradle: IdentityCradle) =>
-        new UserController(cradle.createUserUseCase, cradle.getUserByIdUseCase)
+        new UserController(
+          cradle.createUserUseCase,
+          cradle.getUserByIdUseCase,
+          cradle.updateUserUseCase,
+          cradle.deactivateUserUseCase
+        )
     ).singleton(),
 
     authController: asFunction(
@@ -313,10 +339,12 @@ export function createContainer(config: ContainerConfig) {
       ({
         userController,
         authMiddleware,
+        listRolePermissionsUseCase,
       }: {
         userController: UserController;
         authMiddleware: ReturnType<typeof createAuthMiddleware>;
-      }) => createUserRoutes(userController, authMiddleware)
+        listRolePermissionsUseCase: ListRolePermissionsUseCase;
+      }) => createUserRoutes(userController, authMiddleware, listRolePermissionsUseCase)
     ).singleton(),
 
     authRoutes: asFunction(

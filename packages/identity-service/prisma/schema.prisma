@@ -13,12 +13,24 @@ model UserModel {
   email          String               @unique
   name           String
   role           String               @default("user")
+  status         String               @default("active")
   createdAt      DateTime             @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
   authCredential AuthCredentialModel?
   oauthAccounts  OAuthAccountModel[]
   unidades       UsuarioUnidadeModel[]
 
   @@map("users")
+}
+
+model RolePermissionModel {
+  id         String   @id @default(uuid())
+  role       String
+  permission String
+  createdAt  DateTime @map("created_at")
+
+  @@unique([role, permission])
+  @@map("role_permissions")
 }
 
 model AuthCredentialModel {

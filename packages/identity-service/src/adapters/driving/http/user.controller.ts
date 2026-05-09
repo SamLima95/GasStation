@@ -2,7 +2,10 @@ import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { CreateUserUseCase } from "../../../application/use-cases/create-user.use-case";
 import { GetUserByIdUseCase } from "../../../application/use-cases/get-user-by-id.use-case";
+import { UpdateUserUseCase } from "../../../application/use-cases/update-user.use-case";
+import { DeactivateUserUseCase } from "../../../application/use-cases/deactivate-user.use-case";
 import type { CreateUserDto } from "../../../application/dtos/create-user.dto";
+import type { UpdateUserDto } from "../../../application/dtos/update-user.dto";
 import type { AuthenticatedRequest } from "@lframework/shared";
 import { sendError } from "@lframework/shared";
 
@@ -15,7 +18,9 @@ const uuidParamSchema = z.string().uuid();
 export class UserController {
   constructor(
     private readonly createUserUseCase: CreateUserUseCase,
-    private readonly getUserByIdUseCase: GetUserByIdUseCase
+    private readonly getUserByIdUseCase: GetUserByIdUseCase,
+    private readonly updateUserUseCase: UpdateUserUseCase,
+    private readonly deactivateUserUseCase: DeactivateUserUseCase
   ) {}
 
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -49,6 +54,40 @@ export class UserController {
         return;
       }
       res.json(user);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const { id } = authReq.params;
+      const parsed = uuidParamSchema.safeParse(id);
+      if (!parsed.success) {
+        sendError(res, 400, "Invalid user id format");
+        return;
+      }
+
+      const user = await this.updateUserUseCase.execute(parsed.data, authReq.body as UpdateUserDto);
+      res.json(user);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  deactivate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const { id } = authReq.params;
+      const parsed = uuidParamSchema.safeParse(id);
+      if (!parsed.success) {
+        sendError(res, 400, "Invalid user id format");
+        return;
+      }
+
+      await this.deactivateUserUseCase.execute(parsed.data);
+      res.status(204).send();
     } catch (err) {
       next(err);
     }

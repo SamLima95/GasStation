@@ -18,8 +18,10 @@ describe("RegisterUseCase", () => {
   beforeEach(() => {
     userRepository = {
       save: vi.fn(),
+      saveUserAndOutbox: vi.fn(),
       findById: vi.fn(),
       findByEmail: vi.fn().mockResolvedValue(null),
+      listPermissionsByRole: vi.fn(),
     };
     registrationPersistence = {
       saveUserAndCredential: vi.fn().mockResolvedValue(undefined),

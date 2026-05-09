@@ -7,6 +7,7 @@ import { z } from "zod";
 import { registerSchema } from "./application/dtos/register.dto";
 import { loginSchema } from "./application/dtos/login.dto";
 import { createUserSchema } from "./application/dtos/create-user.dto";
+import { updateUserSchema } from "./application/dtos/update-user.dto";
 import { userResponseDtoSchema } from "./application/dtos/user-response.dto";
 import { createUnidadeSchema, unidadeResponseDtoSchema } from "./application/dtos/unidade.dto";
 import { linkUserToUnidadeSchema, usuarioUnidadeResponseDtoSchema } from "./application/dtos/usuario-unidade.dto";
@@ -26,6 +27,7 @@ const AuthResponseSchema = z
   })
   .openapi("AuthResponse");
 const CreateUserBodySchema = createUserSchema.openapi("CreateUserBody");
+const UpdateUserBodySchema = updateUserSchema.openapi("UpdateUserBody");
 const OAuthQuerySchema = z.object({ code: z.string(), state: z.string() });
 
 const registry = new OpenAPIRegistry();
@@ -180,6 +182,49 @@ registry.registerPath({
       description: "Não encontrado",
       content: { "application/json": { schema: ErrorSchema } },
     },
+  },
+});
+
+registry.registerPath({
+  method: "patch",
+  path: "/api/users/{id}",
+  summary: "Editar usuário (permissão users:update:any)",
+  tags: ["Users"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    body: {
+      content: { "application/json": { schema: UpdateUserBodySchema } },
+    },
+  },
+  responses: {
+    200: {
+      description: "Atualizado",
+      content: { "application/json": { schema: UserResponseSchema } },
+    },
+    400: { description: "Validação", content: { "application/json": { schema: ErrorSchema } } },
+    401: { description: "Não autenticado", content: { "application/json": { schema: ErrorSchema } } },
+    403: { description: "Sem permissão", content: { "application/json": { schema: ErrorSchema } } },
+    404: { description: "Não encontrado", content: { "application/json": { schema: ErrorSchema } } },
+    409: { description: "Email já existe", content: { "application/json": { schema: ErrorSchema } } },
+  },
+});
+
+registry.registerPath({
+  method: "delete",
+  path: "/api/users/{id}",
+  summary: "Desativar usuário (permissão users:deactivate:any)",
+  tags: ["Users"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+  },
+  responses: {
+    204: { description: "Desativado" },
+    400: { description: "Validação", content: { "application/json": { schema: ErrorSchema } } },
+    401: { description: "Não autenticado", content: { "application/json": { schema: ErrorSchema } } },
+    403: { description: "Sem permissão", content: { "application/json": { schema: ErrorSchema } } },
+    404: { description: "Não encontrado", content: { "application/json": { schema: ErrorSchema } } },
   },
 });
 

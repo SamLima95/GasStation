@@ -30,6 +30,7 @@ export class PrismaUserRegistrationPersistence implements IUserRegistrationPersi
             email: user.email.value,
             name: user.name,
             role: user.role,
+            status: user.status,
             createdAt: user.createdAt,
           },
           update: {

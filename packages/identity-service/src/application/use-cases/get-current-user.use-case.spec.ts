@@ -9,8 +9,10 @@ describe("GetCurrentUserUseCase", () => {
   beforeEach(() => {
     userRepository = {
       save: vi.fn(),
+      saveUserAndOutbox: vi.fn(),
       findById: vi.fn(),
       findByEmail: vi.fn(),
+      listPermissionsByRole: vi.fn(),
     };
   });
 
@@ -31,7 +33,10 @@ describe("GetCurrentUserUseCase", () => {
       id: "user-123",
       email: "u@example.com",
       name: "Nome Completo",
+      role: "user",
+      status: "active",
       createdAt: "2025-01-15T12:00:00.000Z",
+      updatedAt: "2025-01-15T12:00:00.000Z",
     });
     expect(userRepository.findById).toHaveBeenCalledWith("user-123");
   });

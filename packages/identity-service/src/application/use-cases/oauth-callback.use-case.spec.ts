@@ -19,8 +19,10 @@ describe("OAuthCallbackUseCase", () => {
   beforeEach(() => {
     userRepository = {
       save: vi.fn(),
+      saveUserAndOutbox: vi.fn(),
       findById: vi.fn(),
       findByEmail: vi.fn(),
+      listPermissionsByRole: vi.fn(),
     };
     oauthAccountRepository = {
       findByProviderAndProviderId: vi.fn(),

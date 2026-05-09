@@ -11,8 +11,10 @@ describe("GetUserByIdUseCase", () => {
   beforeEach(() => {
     userRepository = {
       save: vi.fn(),
+      saveUserAndOutbox: vi.fn(),
       findById: vi.fn(),
       findByEmail: vi.fn(),
+      listPermissionsByRole: vi.fn(),
     };
     cache = {
       get: vi.fn().mockResolvedValue(null),
@@ -38,7 +40,10 @@ describe("GetUserByIdUseCase", () => {
       id: "user-123",
       email: "u@example.com",
       name: "Nome",
+      role: "user",
+      status: "active",
       createdAt: "2025-01-01T00:00:00.000Z",
+      updatedAt: "2025-01-01T00:00:00.000Z",
     });
     expect(cache.get).toHaveBeenCalledWith("user:user-123", expect.anything());
     expect(cache.set).toHaveBeenCalledWith("user:user-123", expect.any(Object), 300);

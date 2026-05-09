@@ -24,6 +24,9 @@ export class LoginUseCase {
     if (!user) {
       throw new InvalidCredentialsError("Invalid email or password");
     }
+    if (user.status !== "active") {
+      throw new InvalidCredentialsError("Invalid email or password");
+    }
 
     const hash = await this.authCredentialRepository.getPasswordHashByUserId(user.id);
     if (!hash) {

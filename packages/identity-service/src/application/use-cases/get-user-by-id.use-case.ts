@@ -24,7 +24,10 @@ export class GetUserByIdUseCase {
       id: user.id,
       email: user.email.value,
       name: user.name,
+      role: user.role,
+      status: user.status,
       createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
     };
 
     await this.cache.set(cacheKey, dto, 300);

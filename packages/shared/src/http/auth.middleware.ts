@@ -22,6 +22,7 @@ declare global {
       userId?: string;
       userEmail?: string;
       userRole?: string;
+      userPermissions?: string[];
     }
   }
 }
@@ -33,6 +34,7 @@ export type AuthenticatedRequest = Request & {
   userId: string;
   userEmail?: string;
   userRole?: string;
+  userPermissions?: string[];
 };
 
 /**
@@ -76,5 +78,28 @@ export function requireRole(role: string) {
       return;
     }
     next();
+  };
+}
+
+export function requirePermission(
+  permission: string,
+  resolvePermissions?: (req: Request) => Promise<string[]> | string[]
+) {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const permissions = resolvePermissions
+        ? await resolvePermissions(req)
+        : req.userPermissions ?? [];
+
+      if (!permissions.includes(permission)) {
+        sendError(res, 403, "Forbidden");
+        return;
+      }
+
+      req.userPermissions = permissions;
+      next();
+    } catch (err) {
+      next(err);
+    }
   };
 }

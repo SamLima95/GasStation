@@ -10,8 +10,10 @@ describe("GetUserByIdUseCase — cenários absurdos", () => {
   beforeEach(() => {
     userRepository = {
       save: vi.fn(),
+      saveUserAndOutbox: vi.fn(),
       findById: vi.fn(),
       findByEmail: vi.fn(),
+      listPermissionsByRole: vi.fn(),
     };
     cache = {
       get: vi.fn().mockResolvedValue(null),

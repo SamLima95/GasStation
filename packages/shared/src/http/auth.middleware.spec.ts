@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createAuthMiddleware, requireRole } from "./auth.middleware";
+import { createAuthMiddleware, requirePermission, requireRole } from "./auth.middleware";
 import type { Request, Response, NextFunction } from "express";
 
 describe("createAuthMiddleware", () => {
@@ -161,6 +161,61 @@ describe("requireRole", () => {
     middleware(req as Request, res as Response, next);
 
     expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+});
+
+describe("requirePermission", () => {
+  let req: Partial<Request>;
+  let res: Partial<Response>;
+  let next: NextFunction;
+
+  beforeEach(() => {
+    req = {};
+    res = { status: vi.fn().mockReturnThis(), json: vi.fn() };
+    next = vi.fn();
+  });
+
+  it("deve retornar 403 quando a permissão exigida está ausente", async () => {
+    req.userPermissions = ["users:read:any"];
+    const middleware = requirePermission("users:update:any");
+
+    await middleware(req as Request, res as Response, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({ error: "Forbidden" });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("deve chamar next quando a permissão exigida está presente", async () => {
+    req.userPermissions = ["users:update:any"];
+    const middleware = requirePermission("users:update:any");
+
+    await middleware(req as Request, res as Response, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it("deve resolver permissões via função externa", async () => {
+    const resolver = vi.fn().mockResolvedValue(["users:create"]);
+    const middleware = requirePermission("users:create", resolver);
+
+    await middleware(req as Request, res as Response, next);
+
+    expect(resolver).toHaveBeenCalledWith(req);
+    expect(req.userPermissions).toEqual(["users:create"]);
+    expect(next).toHaveBeenCalled();
+  });
+
+  it("deve repassar erro do resolver para next", async () => {
+    const err = new Error("permissions unavailable");
+    const resolver = vi.fn().mockRejectedValue(err);
+    const middleware = requirePermission("users:create", resolver);
+
+    await middleware(req as Request, res as Response, next);
+
+    expect(next).toHaveBeenCalledWith(err);
     expect(res.status).not.toHaveBeenCalled();
   });
 });

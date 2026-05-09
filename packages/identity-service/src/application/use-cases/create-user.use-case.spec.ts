@@ -15,6 +15,7 @@ describe("CreateUserUseCase", () => {
       saveUserAndOutbox: vi.fn().mockResolvedValue(undefined),
       findById: vi.fn(),
       findByEmail: vi.fn().mockResolvedValue(null),
+      listPermissionsByRole: vi.fn(),
     };
     userCreatedNotifier = {
       notify: vi.fn().mockResolvedValue(undefined),

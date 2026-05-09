@@ -16,8 +16,10 @@ describe("LoginUseCase", () => {
   beforeEach(() => {
     userRepository = {
       save: vi.fn(),
+      saveUserAndOutbox: vi.fn(),
       findById: vi.fn(),
       findByEmail: vi.fn(),
+      listPermissionsByRole: vi.fn(),
     };
     authCredentialRepository = {
       getPasswordHashByUserId: vi.fn(),

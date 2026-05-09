@@ -11,4 +11,5 @@ export interface IUserRepository {
   saveUserAndOutbox(user: User, outboxEvent: OutboxEvent): Promise<void>;
   findById(id: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
+  listPermissionsByRole(role: string): Promise<string[]>;
 }
