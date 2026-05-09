@@ -4,6 +4,7 @@ import Redis from "ioredis";
 import { RedisCacheAdapter, type ICacheService } from "@lframework/shared";
 import { PrismaUserRepository } from "./adapters/driven/persistence/prisma-user.repository";
 import { PrismaAuthCredentialRepository } from "./adapters/driven/persistence/prisma-auth-credential.repository";
+import { PrismaPasswordResetTokenRepository } from "./adapters/driven/persistence/prisma-password-reset-token.repository";
 import { PrismaUserRegistrationPersistence } from "./adapters/driven/persistence/prisma-user-registration.repository";
 import { PrismaUserOAuthRegistrationPersistence } from "./adapters/driven/persistence/prisma-user-oauth-registration.repository";
 import { PrismaOAuthAccountRepository } from "./adapters/driven/persistence/prisma-oauth-account.repository";
@@ -28,6 +29,9 @@ import { RegisterUseCase } from "./application/use-cases/register.use-case";
 import { LoginUseCase } from "./application/use-cases/login.use-case";
 import { GetCurrentUserUseCase } from "./application/use-cases/get-current-user.use-case";
 import { OAuthCallbackUseCase } from "./application/use-cases/oauth-callback.use-case";
+import { RequestPasswordResetUseCase } from "./application/use-cases/request-password-reset.use-case";
+import { ResetPasswordUseCase } from "./application/use-cases/reset-password.use-case";
+import { LogoutUseCase } from "./application/use-cases/logout.use-case";
 import { CreateUnidadeUseCase } from "./application/use-cases/create-unidade.use-case";
 import { ListUnidadesUseCase } from "./application/use-cases/list-unidades.use-case";
 import { GetUnidadeByIdUseCase } from "./application/use-cases/get-unidade-by-id.use-case";
@@ -73,6 +77,7 @@ interface IdentityCradle {
   cache: RedisCacheAdapter;
   userRepository: PrismaUserRepository;
   authCredentialRepository: PrismaAuthCredentialRepository;
+  passwordResetTokenRepository: PrismaPasswordResetTokenRepository;
   registrationPersistence: PrismaUserRegistrationPersistence;
   userOAuthRegistrationPersistence: PrismaUserOAuthRegistrationPersistence;
   oauthAccountRepository: PrismaOAuthAccountRepository;
@@ -96,6 +101,9 @@ interface IdentityCradle {
   loginUseCase: LoginUseCase;
   getCurrentUserUseCase: GetCurrentUserUseCase;
   oauthCallbackUseCase: OAuthCallbackUseCase;
+  requestPasswordResetUseCase: RequestPasswordResetUseCase;
+  resetPasswordUseCase: ResetPasswordUseCase;
+  logoutUseCase: LogoutUseCase;
   createUnidadeUseCase: CreateUnidadeUseCase;
   listUnidadesUseCase: ListUnidadesUseCase;
   getUnidadeByIdUseCase: GetUnidadeByIdUseCase;
@@ -144,6 +152,10 @@ export function createContainer(config: ContainerConfig) {
     authCredentialRepository: asFunction(
       (cradle: IdentityCradle) =>
         new PrismaAuthCredentialRepository(cradle.prisma)
+    ).singleton(),
+    passwordResetTokenRepository: asFunction(
+      (cradle: IdentityCradle) =>
+        new PrismaPasswordResetTokenRepository(cradle.prisma)
     ).singleton(),
     registrationPersistence: asFunction(
       (cradle: IdentityCradle) =>
@@ -268,6 +280,27 @@ export function createContainer(config: ContainerConfig) {
         )
     ).singleton(),
 
+    requestPasswordResetUseCase: asFunction(
+      (cradle: IdentityCradle) =>
+        new RequestPasswordResetUseCase(
+          cradle.userRepository,
+          cradle.passwordResetTokenRepository
+        )
+    ).singleton(),
+
+    resetPasswordUseCase: asFunction(
+      (cradle: IdentityCradle) =>
+        new ResetPasswordUseCase(
+          cradle.passwordResetTokenRepository,
+          cradle.authCredentialRepository,
+          cradle.passwordHasher
+        )
+    ).singleton(),
+
+    logoutUseCase: asFunction(
+      (cradle: IdentityCradle) => new LogoutUseCase(cradle.cache)
+    ).singleton(),
+
     createUnidadeUseCase: asFunction(
       (cradle: IdentityCradle) => new CreateUnidadeUseCase(cradle.unidadeRepository)
     ).singleton(),
@@ -309,6 +342,9 @@ export function createContainer(config: ContainerConfig) {
           cradle.loginUseCase,
           cradle.getCurrentUserUseCase,
           cradle.oauthCallbackUseCase,
+          cradle.requestPasswordResetUseCase,
+          cradle.resetPasswordUseCase,
+          cradle.logoutUseCase,
           cradle.googleProvider,
           cradle.githubProvider,
           cradle.baseUrl,
@@ -331,8 +367,13 @@ export function createContainer(config: ContainerConfig) {
     ).singleton(),
 
     authMiddleware: asFunction(
-      ({ tokenService }: { tokenService: JwtTokenService }) =>
-        createAuthMiddleware((token) => tokenService.verify(token))
+      ({ tokenService, cache }: { tokenService: JwtTokenService; cache: ICacheService }) =>
+        createAuthMiddleware((token) => tokenService.verify(token), {
+          isRevoked: async (payload) => {
+            if (!payload.jti) return false;
+            return Boolean(await cache.get<boolean>(`jwt:blacklist:${payload.jti}`));
+          },
+        })
     ).singleton(),
 
     userRoutes: asFunction(

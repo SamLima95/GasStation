@@ -6,6 +6,9 @@ import type { RegisterUseCase } from "../../../application/use-cases/register.us
 import type { LoginUseCase } from "../../../application/use-cases/login.use-case";
 import type { GetCurrentUserUseCase } from "../../../application/use-cases/get-current-user.use-case";
 import type { OAuthCallbackUseCase } from "../../../application/use-cases/oauth-callback.use-case";
+import type { RequestPasswordResetUseCase } from "../../../application/use-cases/request-password-reset.use-case";
+import type { ResetPasswordUseCase } from "../../../application/use-cases/reset-password.use-case";
+import type { LogoutUseCase } from "../../../application/use-cases/logout.use-case";
 import type { IOAuthProvider } from "../../../application/ports/oauth-provider.port";
 import type { ICacheService } from "@lframework/shared";
 import {
@@ -23,6 +26,9 @@ describe("AuthController", () => {
   let loginUseCase: LoginUseCase;
   let getCurrentUserUseCase: GetCurrentUserUseCase;
   let oauthCallbackUseCase: OAuthCallbackUseCase;
+  let requestPasswordResetUseCase: RequestPasswordResetUseCase;
+  let resetPasswordUseCase: ResetPasswordUseCase;
+  let logoutUseCase: LogoutUseCase;
   let googleProvider: IOAuthProvider | null;
   let githubProvider: IOAuthProvider | null;
   let cache: ICacheService;
@@ -49,6 +55,9 @@ describe("AuthController", () => {
     loginUseCase = { execute: vi.fn() } as unknown as LoginUseCase;
     getCurrentUserUseCase = { execute: vi.fn() } as unknown as GetCurrentUserUseCase;
     oauthCallbackUseCase = { execute: vi.fn() } as unknown as OAuthCallbackUseCase;
+    requestPasswordResetUseCase = { execute: vi.fn() } as unknown as RequestPasswordResetUseCase;
+    resetPasswordUseCase = { execute: vi.fn() } as unknown as ResetPasswordUseCase;
+    logoutUseCase = { execute: vi.fn() } as unknown as LogoutUseCase;
     googleProvider = null;
     githubProvider = null;
     cache = {
@@ -69,6 +78,9 @@ describe("AuthController", () => {
       loginUseCase,
       getCurrentUserUseCase,
       oauthCallbackUseCase,
+      requestPasswordResetUseCase,
+      resetPasswordUseCase,
+      logoutUseCase,
       googleProvider,
       githubProvider,
       baseUrl,
@@ -221,6 +233,9 @@ describe("AuthController", () => {
         loginUseCase,
         getCurrentUserUseCase,
         oauthCallbackUseCase,
+        requestPasswordResetUseCase,
+        resetPasswordUseCase,
+        logoutUseCase,
         mockProvider,
         githubProvider,
         baseUrl,
@@ -275,6 +290,9 @@ describe("AuthController", () => {
         loginUseCase,
         getCurrentUserUseCase,
         oauthCallbackUseCase,
+        requestPasswordResetUseCase,
+        resetPasswordUseCase,
+        logoutUseCase,
         mockProvider,
         githubProvider,
         baseUrl,
@@ -305,6 +323,9 @@ describe("AuthController", () => {
         loginUseCase,
         getCurrentUserUseCase,
         oauthCallbackUseCase,
+        requestPasswordResetUseCase,
+        resetPasswordUseCase,
+        logoutUseCase,
         mockProvider,
         githubProvider,
         baseUrl,
@@ -337,6 +358,9 @@ describe("AuthController", () => {
         loginUseCase,
         getCurrentUserUseCase,
         oauthCallbackUseCase,
+        requestPasswordResetUseCase,
+        resetPasswordUseCase,
+        logoutUseCase,
         mockProvider,
         githubProvider,
         baseUrl,

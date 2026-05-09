@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { randomUUID } from "crypto";
 import { z } from "zod";
 import type { ITokenService, TokenPayload } from "../../../application/ports/token-service.port";
 import { logger } from "@lframework/shared";
@@ -8,6 +9,7 @@ const jwtPayloadSchema = z.object({
   sub: z.string().min(1),
   email: z.string().optional(),
   role: z.string().optional(),
+  jti: z.string().optional(),
   exp: z.number(),
   iat: z.number(),
 });
@@ -26,7 +28,7 @@ export class JwtTokenService implements ITokenService {
   sign(payload: Omit<TokenPayload, "iat" | "exp">): string {
     const { sub, email, role } = payload;
     return jwt.sign(
-      { sub, email, role: role ?? "user" },
+      { sub, email, role: role ?? "user", jti: payload.jti ?? randomUUID() },
       this.config.secret,
       { expiresIn: this.config.expiresInSeconds, algorithm: "HS256" }
     );
@@ -47,6 +49,7 @@ export class JwtTokenService implements ITokenService {
         sub: data.sub,
         email: data.email ?? "",
         role: data.role ?? "user",
+        jti: data.jti,
         iat: data.iat,
         exp: data.exp,
       };

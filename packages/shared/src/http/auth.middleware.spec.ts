@@ -130,6 +130,39 @@ describe("createAuthMiddleware", () => {
     });
     expect(next).not.toHaveBeenCalled();
   });
+
+  it("deve retornar 401 quando token foi revogado", async () => {
+    req.headers = { authorization: "Bearer token" };
+    const verify = vi.fn().mockReturnValue({ sub: "id-1", jti: "jwt-1" });
+    const middleware = createAuthMiddleware(verify, {
+      isRevoked: vi.fn().mockResolvedValue(true),
+    });
+
+    middleware(req as Request, res as Response, next);
+    await vi.waitFor(() => {
+      expect(res.status).toHaveBeenCalledWith(401);
+    });
+
+    expect(res.json).toHaveBeenCalledWith({ error: "Revoked token" });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("deve anexar metadados do token quando não foi revogado", async () => {
+    req.headers = { authorization: "Bearer token" };
+    const verify = vi.fn().mockReturnValue({ sub: "id-1", jti: "jwt-1", exp: 123 });
+    const middleware = createAuthMiddleware(verify, {
+      isRevoked: vi.fn().mockResolvedValue(false),
+    });
+
+    middleware(req as Request, res as Response, next);
+    await vi.waitFor(() => {
+      expect(next).toHaveBeenCalled();
+    });
+
+    expect(req.userTokenId).toBe("jwt-1");
+    expect(req.userTokenExpiresAt).toBe(123);
+    expect(req.authToken).toBe("token");
+  });
 });
 
 describe("requireRole", () => {

@@ -6,6 +6,7 @@ import {
 import { z } from "zod";
 import { registerSchema } from "./application/dtos/register.dto";
 import { loginSchema } from "./application/dtos/login.dto";
+import { forgotPasswordSchema, resetPasswordSchema } from "./application/dtos/password-reset.dto";
 import { createUserSchema } from "./application/dtos/create-user.dto";
 import { updateUserSchema } from "./application/dtos/update-user.dto";
 import { userResponseDtoSchema } from "./application/dtos/user-response.dto";
@@ -18,6 +19,8 @@ extendZodWithOpenApi(z);
 const ErrorSchema = z.object({ error: z.string(), message: z.string() }).openapi("Error");
 const RegisterBodySchema = registerSchema.openapi("RegisterBody");
 const LoginBodySchema = loginSchema.openapi("LoginBody");
+const ForgotPasswordBodySchema = forgotPasswordSchema.openapi("ForgotPasswordBody");
+const ResetPasswordBodySchema = resetPasswordSchema.openapi("ResetPasswordBody");
 const UserResponseSchema = userResponseDtoSchema.openapi("UserResponse");
 const AuthResponseSchema = z
   .object({
@@ -94,6 +97,58 @@ registry.registerPath({
       description: "Usuário não encontrado",
       content: { "application/json": { schema: ErrorSchema } },
     },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/auth/logout",
+  summary: "Logout com revogação do token atual",
+  tags: ["Auth"],
+  security: [{ bearerAuth: [] }],
+  responses: {
+    204: { description: "Token revogado" },
+    401: { description: "Não autenticado", content: { "application/json": { schema: ErrorSchema } } },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/auth/password/forgot",
+  summary: "Solicitar token de recuperação de senha",
+  tags: ["Auth"],
+  request: {
+    body: { content: { "application/json": { schema: ForgotPasswordBodySchema } } },
+  },
+  responses: {
+    202: {
+      description: "Solicitação aceita",
+      content: {
+        "application/json": {
+          schema: z.object({
+            message: z.string(),
+            resetToken: z.string().optional(),
+            expiresAt: z.string().optional(),
+          }),
+        },
+      },
+    },
+    400: { description: "Validação", content: { "application/json": { schema: ErrorSchema } } },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/auth/password/reset",
+  summary: "Redefinir senha com token de recuperação",
+  tags: ["Auth"],
+  request: {
+    body: { content: { "application/json": { schema: ResetPasswordBodySchema } } },
+  },
+  responses: {
+    204: { description: "Senha redefinida" },
+    400: { description: "Validação", content: { "application/json": { schema: ErrorSchema } } },
+    401: { description: "Token inválido ou expirado", content: { "application/json": { schema: ErrorSchema } } },
   },
 });
 

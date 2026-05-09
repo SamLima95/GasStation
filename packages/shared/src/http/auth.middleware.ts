@@ -9,6 +9,8 @@ export interface JwtPayload {
   sub: string;
   email?: string;
   role?: string;
+  jti?: string;
+  exp?: number;
 }
 
 /**
@@ -23,6 +25,9 @@ declare global {
       userEmail?: string;
       userRole?: string;
       userPermissions?: string[];
+      userTokenId?: string;
+      userTokenExpiresAt?: number;
+      authToken?: string;
     }
   }
 }
@@ -35,6 +40,9 @@ export type AuthenticatedRequest = Request & {
   userEmail?: string;
   userRole?: string;
   userPermissions?: string[];
+  userTokenId?: string;
+  userTokenExpiresAt?: number;
+  authToken?: string;
 };
 
 /**
@@ -42,7 +50,8 @@ export type AuthenticatedRequest = Request & {
  * Uso: createAuthMiddleware((token) => tokenService.verify(token)) ou createAuthMiddleware((token) => jwt.verify(...)).
  */
 export function createAuthMiddleware(
-  verify: (token: string) => JwtPayload | null
+  verify: (token: string) => JwtPayload | null,
+  options: { isRevoked?: (payload: JwtPayload, token: string) => Promise<boolean> | boolean } = {}
 ) {
   return (req: Request, res: Response, next: NextFunction): void => {
     const authHeader = req.headers.authorization;
@@ -60,10 +69,30 @@ export function createAuthMiddleware(
       sendError(res, 401, "Invalid token: missing subject");
       return;
     }
-    req.userId = payload.sub;
-    req.userEmail = payload.email;
-    req.userRole = payload.role ?? "user";
-    next();
+    const attachAndContinue = (): void => {
+      req.userId = payload.sub;
+      req.userEmail = payload.email;
+      req.userRole = payload.role ?? "user";
+      req.userTokenId = payload.jti;
+      req.userTokenExpiresAt = payload.exp;
+      req.authToken = token;
+      next();
+    };
+
+    if (!options.isRevoked) {
+      attachAndContinue();
+      return;
+    }
+
+    Promise.resolve(options.isRevoked(payload, token))
+      .then((revoked) => {
+        if (revoked) {
+          sendError(res, 401, "Revoked token");
+          return;
+        }
+        attachAndContinue();
+      })
+      .catch(next);
   };
 }
 

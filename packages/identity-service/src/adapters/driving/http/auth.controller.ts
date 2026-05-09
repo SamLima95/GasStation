@@ -4,10 +4,14 @@ import type { RegisterUseCase } from "../../../application/use-cases/register.us
 import type { LoginUseCase } from "../../../application/use-cases/login.use-case";
 import type { GetCurrentUserUseCase } from "../../../application/use-cases/get-current-user.use-case";
 import type { OAuthCallbackUseCase } from "../../../application/use-cases/oauth-callback.use-case";
+import type { RequestPasswordResetUseCase } from "../../../application/use-cases/request-password-reset.use-case";
+import type { ResetPasswordUseCase } from "../../../application/use-cases/reset-password.use-case";
+import type { LogoutUseCase } from "../../../application/use-cases/logout.use-case";
 import type { IOAuthProvider } from "../../../application/ports/oauth-provider.port";
 import type { ICacheService } from "@lframework/shared";
 import type { RegisterDto } from "../../../application/dtos/register.dto";
 import type { LoginDto } from "../../../application/dtos/login.dto";
+import type { ForgotPasswordDto, ResetPasswordDto } from "../../../application/dtos/password-reset.dto";
 import type { AuthResponseDto } from "../../../application/dtos/auth-response.dto";
 import type { OAuthCallbackResponseDto } from "../../../application/dtos/oauth-callback-response.dto";
 import {
@@ -24,6 +28,9 @@ export class AuthController {
     private readonly loginUseCase: LoginUseCase,
     private readonly getCurrentUserUseCase: GetCurrentUserUseCase,
     private readonly oauthCallbackUseCase: OAuthCallbackUseCase,
+    private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
+    private readonly resetPasswordUseCase: ResetPasswordUseCase,
+    private readonly logoutUseCase: LogoutUseCase,
     private readonly googleProvider: IOAuthProvider | null,
     private readonly githubProvider: IOAuthProvider | null,
     private readonly baseUrl: string,
@@ -70,6 +77,39 @@ export class AuthController {
         return;
       }
       res.json(user);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const dto: ForgotPasswordDto = req.body;
+      const result = await this.requestPasswordResetUseCase.execute(dto);
+      res.status(202).json(result);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  resetPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const dto: ResetPasswordDto = req.body;
+      await this.resetPasswordUseCase.execute(dto);
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      await this.logoutUseCase.execute({
+        jti: authReq.userTokenId,
+        exp: authReq.userTokenExpiresAt,
+      });
+      res.status(204).send();
     } catch (err) {
       next(err);
     }

@@ -6,8 +6,8 @@ Checklist baseado na comparacao entre `docs/RequisitosCorp.md` e o estado atual 
 
 - [x] Implementar edicao de usuarios.
 - [x] Implementar exclusao/desativacao de usuarios.
-- [ ] Implementar recuperacao de senha.
-- [ ] Implementar logout server-side ou revogacao antecipada de tokens.
+- [x] Implementar recuperacao de senha.
+- [x] Implementar logout server-side ou revogacao antecipada de tokens.
 - [ ] Implementar controle de sessoes com timeout, refresh token e revogacao.
 - [ ] Registrar logs de login, logout, falhas de autenticacao e alteracoes de usuario.
 

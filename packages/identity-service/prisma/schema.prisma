@@ -17,6 +17,7 @@ model UserModel {
   createdAt      DateTime             @map("created_at")
   updatedAt      DateTime             @updatedAt @map("updated_at")
   authCredential AuthCredentialModel?
+  passwordResetTokens PasswordResetTokenModel[]
   oauthAccounts  OAuthAccountModel[]
   unidades       UsuarioUnidadeModel[]
 
@@ -40,6 +41,20 @@ model AuthCredentialModel {
   user         UserModel @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("auth_credentials")
+}
+
+model PasswordResetTokenModel {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @map("created_at")
+  user      UserModel  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
 }
 
 model OAuthAccountModel {
