@@ -4,10 +4,10 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import swaggerUi from "swagger-ui-express";
 import { createFinancialOpenApi } from "./openapi";
-import { requestIdMiddleware, requestLoggingMiddleware, createErrorHandlerMiddleware, createHealthHandler, apiVersionMiddleware } from "@lframework/shared";
-import type { HttpErrorMapping } from "@lframework/shared";
+import { requestIdMiddleware, requestLoggingMiddleware, createErrorHandlerMiddleware, createDependencyReadinessChecks, isOperationalEndpointPath, registerOperationalEndpoints, apiVersionMiddleware } from "@lframework/shared";
+import type { HttpErrorMapping, ReadinessDependencies } from "@lframework/shared";
 
-export interface FinancialAppContainer {
+export interface FinancialAppContainer extends ReadinessDependencies {
   financialRoutes: Router;
   mapApplicationErrorToHttp: (error: unknown) => { statusCode: number; message: string } | null;
 }
@@ -21,7 +21,7 @@ export function createApp(container: FinancialAppContainer, options: { corsOrigi
     max: 300,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => req.path === "/health",
+    skip: (req) => isOperationalEndpointPath(req.path),
   }));
   app.use(requestIdMiddleware);
   app.use(requestLoggingMiddleware);
@@ -39,7 +39,10 @@ export function createApp(container: FinancialAppContainer, options: { corsOrigi
   }
   app.use("/api/v1", container.financialRoutes);
   app.use("/api", container.financialRoutes);
-  app.get("/health", createHealthHandler("financial-service"));
+  registerOperationalEndpoints(app, {
+    serviceName: "financial-service",
+    readinessChecks: createDependencyReadinessChecks(container),
+  });
   app.use(createErrorHandlerMiddleware((err: unknown): HttpErrorMapping => container.mapApplicationErrorToHttp(err) ?? { statusCode: 500, message: "Internal server error" }));
   return app;
 }

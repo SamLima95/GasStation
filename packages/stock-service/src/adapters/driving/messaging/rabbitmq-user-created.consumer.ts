@@ -7,13 +7,12 @@ import {
   EXCHANGE_USER_EVENTS,
   QUEUE_USER_CREATED_STOCK,
   QUEUE_USER_CREATED_STOCK_FAILED,
+  RABBITMQ_MAX_RETRIES as MAX_RETRIES,
+  RABBITMQ_RETRY_BASE_MS as RETRY_BASE_MS,
+  RABBITMQ_RETRY_HEADER as RETRY_HEADER,
   nameSchema,
   logger,
 } from "@lframework/shared";
-
-const MAX_RETRIES = 5;
-const RETRY_BASE_MS = 2000;
-const RETRY_HEADER = "x-retry-count";
 
 const EMAIL_FORMAT = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_EMAIL_LENGTH = 254;

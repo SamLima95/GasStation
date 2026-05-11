@@ -7,23 +7,14 @@ import {
   EXCHANGE_USER_EVENTS,
   QUEUE_USER_CREATED_CATALOG,
   QUEUE_USER_CREATED_CATALOG_FAILED,
+  RABBITMQ_MAX_RETRIES as MAX_RETRIES,
+  RABBITMQ_RETRY_BASE_MS as RETRY_BASE_MS,
+  RABBITMQ_RETRY_HEADER as RETRY_HEADER,
   nameSchema,
   logger,
 } from "@lframework/shared";
 
 /** Não confiamos no publisher: validamos payload com as mesmas regras de nome/email e occurredAt. */
-
-/**
- * Número máximo de tentativas de processamento antes de enviar para a fila de falhas.
- * Após MAX_RETRIES falhas, a mensagem é enviada para QUEUE_USER_CREATED_CATALOG_FAILED
- * (nack sem requeue) e logada para inspeção.
- */
-const MAX_RETRIES = 5;
-
-/** Base do backoff exponencial (ms). delay = RETRY_BASE_MS * 2^(count-1). */
-const RETRY_BASE_MS = 2000;
-
-const RETRY_HEADER = "x-retry-count";
 
 const EMAIL_FORMAT = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_EMAIL_LENGTH = 254;

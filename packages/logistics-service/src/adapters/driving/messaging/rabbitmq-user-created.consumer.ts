@@ -2,9 +2,18 @@ import amqp, { ConsumeMessage } from "amqplib";
 import { LRUCache } from "lru-cache";
 import { z } from "zod";
 import type { UserCreatedPayload } from "@lframework/shared";
-import { USER_CREATED_EVENT, EXCHANGE_USER_EVENTS, QUEUE_USER_CREATED_LOGISTICS, QUEUE_USER_CREATED_LOGISTICS_FAILED, nameSchema, logger } from "@lframework/shared";
+import {
+  USER_CREATED_EVENT,
+  EXCHANGE_USER_EVENTS,
+  QUEUE_USER_CREATED_LOGISTICS,
+  QUEUE_USER_CREATED_LOGISTICS_FAILED,
+  RABBITMQ_MAX_RETRIES as MAX_RETRIES,
+  RABBITMQ_RETRY_BASE_MS as RETRY_BASE_MS,
+  RABBITMQ_RETRY_HEADER as RETRY_HEADER,
+  nameSchema,
+  logger,
+} from "@lframework/shared";
 
-const MAX_RETRIES = 5; const RETRY_BASE_MS = 2000; const RETRY_HEADER = "x-retry-count";
 const userCreatedPayloadSchema = z.object({
   userId: z.string().min(1).max(64),
   email: z.string().min(1).transform((s) => s.trim().toLowerCase()).refine((s) => s.length <= 254).refine((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)),
@@ -39,8 +48,8 @@ export class RabbitMqUserCreatedConsumer {
         const key = msg.content.toString();
         const prev = (typeof msg.properties?.headers?.[RETRY_HEADER] === "number" ? msg.properties.headers[RETRY_HEADER] : this.retryCount.get(key)) ?? 0;
         const count = prev + 1; this.retryCount.set(key, count);
-        if (count >= MAX_RETRIES) { this.channel.sendToQueue(QUEUE_USER_CREATED_LOGISTICS_FAILED, msg.content, { headers: { ...msg.properties?.headers, [RETRY_HEADER]: count } }); this.retryCount.delete(key); this.channel.nack(msg, false, false); }
-        else { const delay = RETRY_BASE_MS * 2 ** (count - 1); const copy = Buffer.from(msg.content); const hdr = { ...msg.properties?.headers, [RETRY_HEADER]: count }; const tid = setTimeout(() => { this.pendingTimeouts.delete(tid); if (!this.channel) return; try { this.channel.publish(EXCHANGE_USER_EVENTS, "user_created", copy, { headers: hdr }); this.channel.nack(msg, false, false); } catch {} }, delay); this.pendingTimeouts.add(tid); }
+        if (count >= MAX_RETRIES) { logger.error({ err, retries: count }, "UserCreated sent to failed queue"); this.channel.sendToQueue(QUEUE_USER_CREATED_LOGISTICS_FAILED, msg.content, { headers: { ...msg.properties?.headers, [RETRY_HEADER]: count } }); this.retryCount.delete(key); this.channel.nack(msg, false, false); }
+        else { const delay = RETRY_BASE_MS * 2 ** (count - 1); const copy = Buffer.from(msg.content); const hdr = { ...msg.properties?.headers, [RETRY_HEADER]: count }; const tid = setTimeout(() => { this.pendingTimeouts.delete(tid); if (!this.channel) return; try { this.channel.publish(EXCHANGE_USER_EVENTS, "user_created", copy, { headers: hdr }); this.channel.nack(msg, false, false); } catch (publishErr) { logger.error({ err: publishErr, retry: count }, "Failed to republish UserCreated"); } }, delay); this.pendingTimeouts.add(tid); }
       }
     });
   }

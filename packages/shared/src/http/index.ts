@@ -1,5 +1,13 @@
 export { sendError } from "./send-error";
-export { createHealthHandler } from "./health";
+export {
+  createHealthHandler,
+  createDependencyReadinessChecks,
+  createReadinessHandler,
+  type ReadinessDependencies,
+  type ReadinessCheck,
+  type ReadinessCheckResult,
+  type ReadinessResponseDto,
+} from "./health";
 export type { HttpErrorMapping } from "./error-mapping";
 export { createErrorToHttpMapper } from "./error-to-http.factory";
 export { sendValidationError } from "./send-validation-error";
@@ -26,3 +34,18 @@ export {
   type UnitContextRequest,
 } from "./unit-context.middleware";
 export { apiVersionMiddleware } from "./api-version.middleware";
+export {
+  ResilientHttpClient,
+  type ResilientHttpClientOptions,
+  type ResilientHttpRequestOptions,
+  type ResilientHttpResult,
+} from "./resilient-http-client";
+export {
+  createHttpMetricsMiddleware,
+  createHttpMetricsSnapshot,
+  createMetricsHandler,
+  isOperationalEndpointPath,
+  registerOperationalEndpoints,
+  type HttpMetricsSnapshot,
+  type OperationalEndpointOptions,
+} from "./observability";

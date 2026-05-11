@@ -2,9 +2,17 @@ import amqp, { ConsumeMessage } from "amqplib";
 import { LRUCache } from "lru-cache";
 import { z } from "zod";
 import type { OrderConfirmedPayload } from "../../../application/ports/event-consumer.port";
-import { EXCHANGE_ORDER_EVENTS, ORDER_CONFIRMED_EVENT, QUEUE_ORDER_CONFIRMED_LOGISTICS, QUEUE_ORDER_CONFIRMED_LOGISTICS_FAILED, logger } from "@lframework/shared";
+import {
+  EXCHANGE_ORDER_EVENTS,
+  ORDER_CONFIRMED_EVENT,
+  QUEUE_ORDER_CONFIRMED_LOGISTICS,
+  QUEUE_ORDER_CONFIRMED_LOGISTICS_FAILED,
+  RABBITMQ_MAX_RETRIES as MAX_RETRIES,
+  RABBITMQ_RETRY_BASE_MS as RETRY_BASE_MS,
+  RABBITMQ_RETRY_HEADER as RETRY_HEADER,
+  logger,
+} from "@lframework/shared";
 
-const MAX_RETRIES = 5; const RETRY_BASE_MS = 2000; const RETRY_HEADER = "x-retry-count";
 const schema = z.object({ pedidoId: z.string().min(1), clienteId: z.string().min(1), unidadeId: z.string().min(1), valorTotal: z.coerce.number().positive(), status: z.string(), tipoPagamento: z.string() });
 type AmqpConnection = Awaited<ReturnType<typeof amqp.connect>>;
 
@@ -34,8 +42,8 @@ export class RabbitMqOrderConfirmedConsumer {
         const key = msg.content.toString();
         const prev = (typeof msg.properties?.headers?.[RETRY_HEADER] === "number" ? msg.properties.headers[RETRY_HEADER] : this.retryCount.get(key)) ?? 0;
         const count = prev + 1; this.retryCount.set(key, count);
-        if (count >= MAX_RETRIES) { this.channel.sendToQueue(QUEUE_ORDER_CONFIRMED_LOGISTICS_FAILED, msg.content, { headers: { ...msg.properties?.headers, [RETRY_HEADER]: count } }); this.retryCount.delete(key); this.channel.nack(msg, false, false); }
-        else { const delay = RETRY_BASE_MS * 2 ** (count - 1); const copy = Buffer.from(msg.content); const hdr = { ...msg.properties?.headers, [RETRY_HEADER]: count }; const tid = setTimeout(() => { this.pendingTimeouts.delete(tid); if (!this.channel) return; try { this.channel.publish(EXCHANGE_ORDER_EVENTS, ORDER_CONFIRMED_EVENT, copy, { headers: hdr }); this.channel.nack(msg, false, false); } catch {} }, delay); this.pendingTimeouts.add(tid); }
+        if (count >= MAX_RETRIES) { logger.error({ err, retries: count }, "OrderConfirmed sent to failed queue"); this.channel.sendToQueue(QUEUE_ORDER_CONFIRMED_LOGISTICS_FAILED, msg.content, { headers: { ...msg.properties?.headers, [RETRY_HEADER]: count } }); this.retryCount.delete(key); this.channel.nack(msg, false, false); }
+        else { const delay = RETRY_BASE_MS * 2 ** (count - 1); const copy = Buffer.from(msg.content); const hdr = { ...msg.properties?.headers, [RETRY_HEADER]: count }; const tid = setTimeout(() => { this.pendingTimeouts.delete(tid); if (!this.channel) return; try { this.channel.publish(EXCHANGE_ORDER_EVENTS, ORDER_CONFIRMED_EVENT, copy, { headers: hdr }); this.channel.nack(msg, false, false); } catch (publishErr) { logger.error({ err: publishErr, retry: count }, "Failed to republish OrderConfirmed"); } }, delay); this.pendingTimeouts.add(tid); }
       }
     });
   }

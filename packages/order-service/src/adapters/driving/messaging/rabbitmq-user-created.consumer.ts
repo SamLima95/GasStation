@@ -7,13 +7,12 @@ import {
   EXCHANGE_USER_EVENTS,
   QUEUE_USER_CREATED_ORDER,
   QUEUE_USER_CREATED_ORDER_FAILED,
+  RABBITMQ_MAX_RETRIES as MAX_RETRIES,
+  RABBITMQ_RETRY_BASE_MS as RETRY_BASE_MS,
+  RABBITMQ_RETRY_HEADER as RETRY_HEADER,
   nameSchema,
   logger,
 } from "@lframework/shared";
-
-const MAX_RETRIES = 5;
-const RETRY_BASE_MS = 2000;
-const RETRY_HEADER = "x-retry-count";
 
 const EMAIL_FORMAT = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_EMAIL_LENGTH = 254;
@@ -78,8 +77,21 @@ export class RabbitMqUserCreatedConsumer {
           const timeoutId = setTimeout(() => {
             this.pendingTimeouts.delete(timeoutId);
             if (!this.channel) return;
-            try { this.channel.publish(EXCHANGE_USER_EVENTS, "user_created", contentCopy, { headers }); try { this.channel.nack(msg, false, false); } catch {} }
-            catch (publishErr) { logger.error({ err: publishErr }, "Failed to republish UserCreated"); try { this.channel.nack(msg, false, true); } catch {} }
+            try {
+              this.channel.publish(EXCHANGE_USER_EVENTS, "user_created", contentCopy, { headers });
+              try {
+                this.channel.nack(msg, false, false);
+              } catch (nackErr) {
+                logger.error({ err: nackErr }, "Failed to nack UserCreated after republish");
+              }
+            } catch (publishErr) {
+              logger.error({ err: publishErr }, "Failed to republish UserCreated");
+              try {
+                this.channel.nack(msg, false, true);
+              } catch (nackErr) {
+                logger.error({ err: nackErr }, "Failed to requeue UserCreated after republish failure");
+              }
+            }
           }, delayMs);
           this.pendingTimeouts.add(timeoutId);
         }

@@ -1,0 +1,214 @@
+services:
+  identity-service:
+    image: gasstation/identity-service:local
+    build:
+      context: .
+      dockerfile: packages/identity-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      IDENTITY_SERVICE_PORT: 3001
+      IDENTITY_DATABASE_URL: "postgresql://lframework:lframework@postgres:5432/lframework_identity?connection_limit=5"
+      REDIS_URL: "redis://redis:6379"
+      RABBITMQ_URL: "amqp://lframework:lframework@rabbitmq:5672"
+      JWT_SECRET: "local-docker-secret-min-32-chars-change"
+      BASE_URL: "http://localhost:8080/identity"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+
+  catalog-service:
+    image: gasstation/catalog-service:local
+    build:
+      context: .
+      dockerfile: packages/catalog-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      CATALOG_SERVICE_PORT: 3002
+      CATALOG_DATABASE_URL: "postgresql://lframework:lframework@postgres:5432/lframework?connection_limit=5"
+      REDIS_URL: "redis://redis:6379"
+      RABBITMQ_URL: "amqp://lframework:lframework@rabbitmq:5672"
+      JWT_SECRET: "local-docker-secret-min-32-chars-change"
+      BASE_URL: "http://localhost:8080/catalog"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "3002:3002"
+
+  stock-service:
+    image: gasstation/stock-service:local
+    build:
+      context: .
+      dockerfile: packages/stock-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      STOCK_SERVICE_PORT: 3004
+      STOCK_DATABASE_URL: "postgresql://lframework:lframework@postgres:5432/lframework_stock?connection_limit=5"
+      REDIS_URL: "redis://redis:6379"
+      RABBITMQ_URL: "amqp://lframework:lframework@rabbitmq:5672"
+      JWT_SECRET: "local-docker-secret-min-32-chars-change"
+      BASE_URL: "http://localhost:8080/stock"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "3004:3004"
+
+  order-service:
+    image: gasstation/order-service:local
+    build:
+      context: .
+      dockerfile: packages/order-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      ORDER_SERVICE_PORT: 3005
+      ORDER_DATABASE_URL: "postgresql://lframework:lframework@postgres:5432/lframework_order?connection_limit=5"
+      REDIS_URL: "redis://redis:6379"
+      RABBITMQ_URL: "amqp://lframework:lframework@rabbitmq:5672"
+      JWT_SECRET: "local-docker-secret-min-32-chars-change"
+      BASE_URL: "http://localhost:8080/orders"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "3005:3005"
+
+  financial-service:
+    image: gasstation/financial-service:local
+    build:
+      context: .
+      dockerfile: packages/financial-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      FINANCIAL_SERVICE_PORT: 3006
+      FINANCIAL_DATABASE_URL: "postgresql://lframework:lframework@postgres:5432/lframework_financial?connection_limit=5"
+      REDIS_URL: "redis://redis:6379"
+      RABBITMQ_URL: "amqp://lframework:lframework@rabbitmq:5672"
+      JWT_SECRET: "local-docker-secret-min-32-chars-change"
+      BASE_URL: "http://localhost:8080/financial"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "3006:3006"
+
+  logistics-service:
+    image: gasstation/logistics-service:local
+    build:
+      context: .
+      dockerfile: packages/logistics-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      LOGISTICS_SERVICE_PORT: 3007
+      LOGISTICS_DATABASE_URL: "postgresql://lframework:lframework@postgres:5432/lframework_logistics?connection_limit=5"
+      REDIS_URL: "redis://redis:6379"
+      RABBITMQ_URL: "amqp://lframework:lframework@rabbitmq:5672"
+      JWT_SECRET: "local-docker-secret-min-32-chars-change"
+      BASE_URL: "http://localhost:8080/logistics"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "3007:3007"
+
+  audit-service:
+    image: gasstation/audit-service:local
+    build:
+      context: .
+      dockerfile: packages/audit-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      AUDIT_SERVICE_PORT: 3008
+      AUDIT_DATABASE_URL: "postgresql://lframework:lframework@postgres:5432/lframework_audit?connection_limit=5"
+      RABBITMQ_URL: "amqp://lframework:lframework@rabbitmq:5672"
+      JWT_SECRET: "local-docker-secret-min-32-chars-change"
+      BASE_URL: "http://localhost:8080/audit"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "3008:3008"
+
+  dashboard-service:
+    image: gasstation/dashboard-service:local
+    build:
+      context: .
+      dockerfile: packages/dashboard-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      DASHBOARD_SERVICE_PORT: 3009
+      REDIS_URL: "redis://redis:6379"
+      JWT_SECRET: "local-docker-secret-min-32-chars-change"
+      ORDER_SERVICE_URL: "http://order-service:3005"
+      STOCK_SERVICE_URL: "http://stock-service:3004"
+      FINANCIAL_SERVICE_URL: "http://financial-service:3006"
+      LOGISTICS_SERVICE_URL: "http://logistics-service:3007"
+      BASE_URL: "http://localhost:8080/dashboard"
+    depends_on:
+      redis:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+      stock-service:
+        condition: service_healthy
+      financial-service:
+        condition: service_healthy
+      logistics-service:
+        condition: service_healthy
+    ports:
+      - "3009:3009"
+
+  nginx:
+    volumes:
+      - ./nginx/nginx.apps.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+      catalog-service:
+        condition: service_healthy
+      stock-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+      financial-service:
+        condition: service_healthy
+      logistics-service:
+        condition: service_healthy
+      audit-service:
+        condition: service_healthy
+      dashboard-service:
+        condition: service_healthy

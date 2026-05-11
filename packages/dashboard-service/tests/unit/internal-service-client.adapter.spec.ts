@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { ResilientHttpClient } from "@lframework/shared";
 import { InternalServiceClientAdapter } from "../../src/adapters/driven/http-client/internal-service-client.adapter";
 
 const SERVICE_URLS = {
@@ -13,9 +14,12 @@ describe("InternalServiceClientAdapter", () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    adapter = new InternalServiceClientAdapter(SERVICE_URLS);
     fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
+    adapter = new InternalServiceClientAdapter(
+      SERVICE_URLS,
+      new ResilientHttpClient({ fetchFn: fetchMock, maxRetries: 0, retryBaseMs: 0, retryJitterRatio: 0 })
+    );
   });
 
   afterEach(() => {

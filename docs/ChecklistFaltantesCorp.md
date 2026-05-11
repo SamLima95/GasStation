@@ -34,11 +34,11 @@ Checklist baseado na comparacao entre `docs/RequisitosCorp.md` e o estado atual 
 
 ## 4. Dashboard e KPIs
 
-- [ ] Validar atualizacao quase real-time dos KPIs.
-- [ ] Definir SLA/intervalo oficial de atualizacao dinamica.
-- [ ] Adicionar testes cobrindo filtros por periodo e unidade.
-- [ ] Adicionar testes cobrindo exportacao de relatorios.
-- [ ] Documentar origem de cada KPI exibido no dashboard.
+- [x] Validar atualizacao quase real-time dos KPIs.
+- [x] Definir SLA/intervalo oficial de atualizacao dinamica.
+- [x] Adicionar testes cobrindo filtros por periodo e unidade.
+- [x] Adicionar testes cobrindo exportacao de relatorios.
+- [x] Documentar origem de cada KPI exibido no dashboard.
 
 ## 5. Seguranca
 
@@ -65,22 +65,22 @@ Checklist baseado na comparacao entre `docs/RequisitosCorp.md` e o estado atual 
 
 ## 7. Escalabilidade
 
-- [ ] Documentar estrategia de escalabilidade horizontal por servico.
+- [x] Documentar estrategia de escalabilidade horizontal por servico.
 - [ ] Criar configuracao para multiplas replicas em ambiente orquestrado.
 - [ ] Garantir que todos os servicos sejam stateless em producao.
-- [ ] Validar que sessoes ou estados temporarios nao dependem de memoria local.
-- [ ] Definir limites de conexoes com banco, Redis e RabbitMQ por servico.
-- [ ] Documentar estrategia de balanceamento de carga alem do Nginx local.
+- [x] Validar que sessoes ou estados temporarios nao dependem de memoria local.
+- [x] Definir limites de conexoes com banco, Redis e RabbitMQ por servico.
+- [x] Documentar estrategia de balanceamento de carga alem do Nginx local.
 
 ## 8. Disponibilidade
 
-- [ ] Implementar monitoramento com metricas de aplicacao.
-- [ ] Adicionar endpoint `/metrics` ou integracao com Prometheus/OpenTelemetry.
+- [x] Implementar monitoramento com metricas de aplicacao.
+- [x] Adicionar endpoint `/metrics` ou integracao com Prometheus/OpenTelemetry.
 - [ ] Criar dashboards operacionais de saude dos servicos.
 - [ ] Configurar alertas para erro, latencia, indisponibilidade e filas acumuladas.
 - [ ] Definir estrategia de failover para banco, Redis e RabbitMQ.
 - [ ] Documentar plano de recuperacao de desastre.
-- [ ] Criar health checks que validem dependencias criticas, nao apenas processo HTTP.
+- [x] Criar health checks que validem dependencias criticas, nao apenas processo HTTP.
 
 ## 9. Interoperabilidade
 
@@ -121,12 +121,12 @@ Checklist baseado na comparacao entre `docs/RequisitosCorp.md` e o estado atual 
 
 ## 13. Mensageria com RabbitMQ
 
-- [ ] Padronizar retry automatico em todos os consumidores.
-- [ ] Padronizar dead-letter queues em todos os fluxos de eventos.
-- [ ] Definir quantidade maxima de tentativas por fila.
+- [x] Padronizar retry automatico em todos os consumidores.
+- [x] Padronizar dead-letter queues em todos os fluxos de eventos.
+- [x] Definir quantidade maxima de tentativas por fila.
 - [ ] Registrar metricas de filas, falhas e mensagens acumuladas.
 - [ ] Criar testes para mensagens invalidas e falhas de processamento.
-- [ ] Documentar exchanges, routing keys, filas e payloads.
+- [x] Documentar exchanges, routing keys, filas e payloads.
 - [ ] Garantir idempotencia nos consumidores.
 
 ## 14. Processamento Assincrono
@@ -135,12 +135,12 @@ Checklist baseado na comparacao entre `docs/RequisitosCorp.md` e o estado atual 
 - [ ] Definir quais tarefas pesadas devem ser assincronas.
 - [ ] Implementar retry com backoff para jobs.
 - [ ] Registrar falhas de jobs para auditoria ou observabilidade.
-- [ ] Criar processo de reprocessamento de mensagens em DLQ.
+- [x] Criar processo de reprocessamento de mensagens em DLQ.
 - [ ] Documentar estrategia de atualizacao assincrona de KPIs.
 
 ## 15. Infraestrutura
 
-- [ ] Criar Dockerfile para cada servico, se o deploy exigir imagens independentes.
+- [x] Criar Dockerfile para cada servico, se o deploy exigir imagens independentes.
 - [ ] Criar manifests Kubernetes ou Helm charts.
 - [ ] Configurar autoscaling.
 - [ ] Configurar secrets e config maps por ambiente.
@@ -150,10 +150,10 @@ Checklist baseado na comparacao entre `docs/RequisitosCorp.md` e o estado atual 
 
 ## 16. CI/CD
 
-- [ ] Criar pipeline automatizado de lint.
-- [ ] Criar pipeline automatizado de build.
-- [ ] Criar pipeline automatizado de testes unitarios.
-- [ ] Criar pipeline automatizado de testes de integracao.
+- [x] Criar pipeline automatizado de lint.
+- [x] Criar pipeline automatizado de build.
+- [x] Criar pipeline automatizado de testes unitarios.
+- [x] Criar pipeline automatizado de testes de integracao.
 - [ ] Criar pipeline automatizado de testes E2E, se aplicavel.
 - [ ] Adicionar validacao de migracoes Prisma.
 - [ ] Adicionar publicacao/build de imagens Docker.

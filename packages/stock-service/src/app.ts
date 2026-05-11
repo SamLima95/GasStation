@@ -8,12 +8,14 @@ import {
   requestIdMiddleware,
   requestLoggingMiddleware,
   createErrorHandlerMiddleware,
-  createHealthHandler,
+  createDependencyReadinessChecks,
+  isOperationalEndpointPath,
+  registerOperationalEndpoints,
   apiVersionMiddleware,
 } from "@lframework/shared";
-import type { HttpErrorMapping } from "@lframework/shared";
+import type { HttpErrorMapping, ReadinessDependencies } from "@lframework/shared";
 
-export interface StockAppContainer {
+export interface StockAppContainer extends ReadinessDependencies {
   stockRoutes: Router;
   mapApplicationErrorToHttp: (error: unknown) => { statusCode: number; message: string } | null;
 }
@@ -41,7 +43,7 @@ export function createApp(
     max: 300,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => req.path === "/health",
+    skip: (req) => isOperationalEndpointPath(req.path),
   }));
   app.use(requestIdMiddleware);
   app.use(requestLoggingMiddleware);
@@ -71,7 +73,10 @@ export function createApp(
   app.use("/api/v1", container.stockRoutes);
   app.use("/api", container.stockRoutes);
 
-  app.get("/health", createHealthHandler("stock-service"));
+  registerOperationalEndpoints(app, {
+    serviceName: "stock-service",
+    readinessChecks: createDependencyReadinessChecks(container),
+  });
 
   const errorMapper = (err: unknown): HttpErrorMapping =>
     container.mapApplicationErrorToHttp(err) ?? {

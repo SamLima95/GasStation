@@ -8,11 +8,14 @@ import {
   requestIdMiddleware,
   requestLoggingMiddleware,
   createErrorHandlerMiddleware,
-  createHealthHandler,
+  createDependencyReadinessChecks,
+  isOperationalEndpointPath,
+  registerOperationalEndpoints,
   apiVersionMiddleware,
 } from "@lframework/shared";
+import type { ReadinessDependencies } from "@lframework/shared";
 
-export interface AppContainer {
+export interface AppContainer extends ReadinessDependencies {
   dashboardRoutes: Router;
 }
 
@@ -30,7 +33,7 @@ export function createApp(container: AppContainer, options: CreateAppOptions = {
     max: 300,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => req.path === "/health",
+    skip: (req) => isOperationalEndpointPath(req.path),
   }));
   app.use(requestIdMiddleware);
   app.use(requestLoggingMiddleware);
@@ -49,7 +52,10 @@ export function createApp(container: AppContainer, options: CreateAppOptions = {
 
   app.use("/api/v1", container.dashboardRoutes);
   app.use("/api", container.dashboardRoutes);
-  app.get("/health", createHealthHandler("dashboard-service"));
+  registerOperationalEndpoints(app, {
+    serviceName: "dashboard-service",
+    readinessChecks: createDependencyReadinessChecks(container),
+  });
   app.use(createErrorHandlerMiddleware());
 
   return app;

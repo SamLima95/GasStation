@@ -7,7 +7,9 @@
   "scripts": {
     "build": "pnpm -r run build",
     "lint": "eslint .",
+    "lint:ci": "eslint packages --ignore-pattern 'packages/dashboard-ui/client/**'",
     "test": "pnpm -r run test",
+    "test:integration": "pnpm --filter identity-service run test:integration && pnpm --filter catalog-service run test:integration && pnpm --filter dashboard-service run test:integration",
     "dev:identity": "pnpm --filter identity-service run dev",
     "dev:catalog": "pnpm --filter catalog-service run dev",
     "dev:stock": "pnpm --filter stock-service run dev",
@@ -22,9 +24,13 @@
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:fresh": "docker compose down -v && docker compose up -d",
+    "docker:build:apps": "docker compose -f docker-compose.yml -f docker-compose.apps.yml build",
+    "docker:up:apps": "docker compose -f docker-compose.yml -f docker-compose.apps.yml up -d",
+    "docker:config:apps": "docker compose -f docker-compose.yml -f docker-compose.apps.yml config",
     "migrate:all": "bash scripts/migrate-all.sh",
     "backup:postgres": "bash scripts/backup-postgres.sh",
     "restore:postgres": "bash scripts/restore-postgres.sh",
+    "rabbitmq:redrive": "tsx scripts/redrive-rabbitmq.ts",
     "load-test": "tsx scripts/load-test.ts"
   },
   "engines": {
@@ -33,6 +39,8 @@
   "packageManager": "pnpm@9.0.0",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/amqplib": "^0.10.4",
+    "amqplib": "^0.10.3",
     "eslint": "^10.0.3",
     "glob": "^13.0.6",
     "tsx": "^4.21.0",

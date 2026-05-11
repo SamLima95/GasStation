@@ -2,11 +2,18 @@ import amqp, { ConsumeMessage } from "amqplib";
 import { LRUCache } from "lru-cache";
 import { z } from "zod";
 import type { UserCreatedPayload } from "@lframework/shared";
-import { USER_CREATED_EVENT, EXCHANGE_USER_EVENTS, QUEUE_USER_CREATED_FINANCIAL, QUEUE_USER_CREATED_FINANCIAL_FAILED, nameSchema, logger } from "@lframework/shared";
+import {
+  USER_CREATED_EVENT,
+  EXCHANGE_USER_EVENTS,
+  QUEUE_USER_CREATED_FINANCIAL,
+  QUEUE_USER_CREATED_FINANCIAL_FAILED,
+  RABBITMQ_MAX_RETRIES as MAX_RETRIES,
+  RABBITMQ_RETRY_BASE_MS as RETRY_BASE_MS,
+  RABBITMQ_RETRY_HEADER as RETRY_HEADER,
+  nameSchema,
+  logger,
+} from "@lframework/shared";
 
-const MAX_RETRIES = 5;
-const RETRY_BASE_MS = 2000;
-const RETRY_HEADER = "x-retry-count";
 const EMAIL_FORMAT = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const userCreatedPayloadSchema = z.object({
@@ -58,7 +65,16 @@ export class RabbitMqUserCreatedConsumer {
           const delayMs = RETRY_BASE_MS * 2 ** (count - 1);
           const contentCopy = Buffer.from(msg.content);
           const headers = { ...msg.properties?.headers, [RETRY_HEADER]: count };
-          const tid = setTimeout(() => { this.pendingTimeouts.delete(tid); if (!this.channel) return; try { this.channel.publish(EXCHANGE_USER_EVENTS, "user_created", contentCopy, { headers }); this.channel.nack(msg, false, false); } catch {} }, delayMs);
+          const tid = setTimeout(() => {
+            this.pendingTimeouts.delete(tid);
+            if (!this.channel) return;
+            try {
+              this.channel.publish(EXCHANGE_USER_EVENTS, "user_created", contentCopy, { headers });
+              this.channel.nack(msg, false, false);
+            } catch (publishErr) {
+              logger.error({ err: publishErr, retry: count }, "Failed to republish UserCreated");
+            }
+          }, delayMs);
           this.pendingTimeouts.add(tid);
         }
       }

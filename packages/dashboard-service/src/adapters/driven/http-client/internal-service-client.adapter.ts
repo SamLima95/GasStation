@@ -1,4 +1,4 @@
-import { logger } from "@lframework/shared";
+import { logger, ResilientHttpClient } from "@lframework/shared";
 import type { IServiceClient } from "../../../application/ports/service-client.port";
 
 /**
@@ -6,12 +6,19 @@ import type { IServiceClient } from "../../../application/ports/service-client.p
  * Usa fetch nativo do Node 18+.
  */
 export class InternalServiceClientAdapter implements IServiceClient {
-  constructor(private readonly serviceUrls: {
-    order: string;
-    stock: string;
-    financial: string;
-    logistics: string;
-  }) {}
+  private readonly httpClient: ResilientHttpClient;
+
+  constructor(
+    private readonly serviceUrls: {
+      order: string;
+      stock: string;
+      financial: string;
+      logistics: string;
+    },
+    httpClient?: ResilientHttpClient
+  ) {
+    this.httpClient = httpClient ?? new ResilientHttpClient({ timeoutMs: 5000, maxRetries: 2 });
+  }
 
   async fetchPedidos(unidadeId?: string, authHeader?: string, dataInicio?: string, dataFim?: string): Promise<Array<{ status: string; valorTotal: number }>> {
     return this.fetchJson(this.serviceUrls.order, "/api/v1/pedidos", unidadeId, authHeader, dataInicio, dataFim);
@@ -46,19 +53,15 @@ export class InternalServiceClientAdapter implements IServiceClient {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (authHeader) headers["authorization"] = authHeader;
 
-    try {
-      const res = await fetch(url.toString(), {
-        headers,
-        signal: AbortSignal.timeout(5000),
-      });
-      if (!res.ok) {
-        logger.warn({ url: url.toString(), status: res.status }, "Falha ao consultar serviço interno");
-        return [];
-      }
-      return (await res.json()) as T[];
-    } catch (err) {
-      logger.warn({ err, url: url.toString() }, "Erro ao consultar serviço interno — retornando vazio");
+    const result = await this.httpClient.getJson<T[]>(url, { headers });
+    if (!result.ok) {
+      logger.warn(
+        { err: result.error, url: url.toString(), status: result.status },
+        "Erro ao consultar serviço interno — retornando vazio"
+      );
       return [];
     }
+
+    return result.data;
   }
 }

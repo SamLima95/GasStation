@@ -2,11 +2,16 @@ import amqp, { ConsumeMessage } from "amqplib";
 import { LRUCache } from "lru-cache";
 import { z } from "zod";
 import type { OrderConfirmedPayload } from "../../../application/ports/event-consumer.port";
-import { EXCHANGE_ORDER_EVENTS, ORDER_CONFIRMED_EVENT, QUEUE_ORDER_CONFIRMED_FINANCIAL, QUEUE_ORDER_CONFIRMED_FINANCIAL_FAILED, logger } from "@lframework/shared";
-
-const MAX_RETRIES = 5;
-const RETRY_BASE_MS = 2000;
-const RETRY_HEADER = "x-retry-count";
+import {
+  EXCHANGE_ORDER_EVENTS,
+  ORDER_CONFIRMED_EVENT,
+  QUEUE_ORDER_CONFIRMED_FINANCIAL,
+  QUEUE_ORDER_CONFIRMED_FINANCIAL_FAILED,
+  RABBITMQ_MAX_RETRIES as MAX_RETRIES,
+  RABBITMQ_RETRY_BASE_MS as RETRY_BASE_MS,
+  RABBITMQ_RETRY_HEADER as RETRY_HEADER,
+  logger,
+} from "@lframework/shared";
 
 const orderConfirmedPayloadSchema = z.object({
   pedidoId: z.string().min(1),
@@ -59,7 +64,16 @@ export class RabbitMqOrderConfirmedConsumer {
           const delayMs = RETRY_BASE_MS * 2 ** (count - 1);
           const contentCopy = Buffer.from(msg.content);
           const headers = { ...msg.properties?.headers, [RETRY_HEADER]: count };
-          const tid = setTimeout(() => { this.pendingTimeouts.delete(tid); if (!this.channel) return; try { this.channel.publish(EXCHANGE_ORDER_EVENTS, ORDER_CONFIRMED_EVENT, contentCopy, { headers }); this.channel.nack(msg, false, false); } catch {} }, delayMs);
+          const tid = setTimeout(() => {
+            this.pendingTimeouts.delete(tid);
+            if (!this.channel) return;
+            try {
+              this.channel.publish(EXCHANGE_ORDER_EVENTS, ORDER_CONFIRMED_EVENT, contentCopy, { headers });
+              this.channel.nack(msg, false, false);
+            } catch (publishErr) {
+              logger.error({ err: publishErr, retry: count }, "Failed to republish OrderConfirmed");
+            }
+          }, delayMs);
           this.pendingTimeouts.add(tid);
         }
       }

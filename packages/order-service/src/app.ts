@@ -8,12 +8,14 @@ import {
   requestIdMiddleware,
   requestLoggingMiddleware,
   createErrorHandlerMiddleware,
-  createHealthHandler,
+  createDependencyReadinessChecks,
+  isOperationalEndpointPath,
+  registerOperationalEndpoints,
   apiVersionMiddleware,
 } from "@lframework/shared";
-import type { HttpErrorMapping } from "@lframework/shared";
+import type { HttpErrorMapping, ReadinessDependencies } from "@lframework/shared";
 
-export interface OrderAppContainer {
+export interface OrderAppContainer extends ReadinessDependencies {
   orderRoutes: Router;
   mapApplicationErrorToHttp: (error: unknown) => { statusCode: number; message: string } | null;
 }
@@ -32,7 +34,7 @@ export function createApp(container: OrderAppContainer, options: CreateAppOption
     max: 300,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => req.path === "/health",
+    skip: (req) => isOperationalEndpointPath(req.path),
   }));
   app.use(requestIdMiddleware);
   app.use(requestLoggingMiddleware);
@@ -54,7 +56,10 @@ export function createApp(container: OrderAppContainer, options: CreateAppOption
 
   app.use("/api/v1", container.orderRoutes);
   app.use("/api", container.orderRoutes);
-  app.get("/health", createHealthHandler("order-service"));
+  registerOperationalEndpoints(app, {
+    serviceName: "order-service",
+    readinessChecks: createDependencyReadinessChecks(container),
+  });
 
   const errorMapper = (err: unknown): HttpErrorMapping =>
     container.mapApplicationErrorToHttp(err) ?? { statusCode: 500, message: "Internal server error" };

@@ -2,6 +2,10 @@
  * Constantes para RabbitMQ: exchanges e filas compartilhados.
  * Centralize aqui para manter contrato entre publicadores e consumidores.
  */
+export const RABBITMQ_MAX_RETRIES = 5;
+export const RABBITMQ_RETRY_BASE_MS = 2000;
+export const RABBITMQ_RETRY_HEADER = "x-retry-count";
+
 export const EXCHANGE_USER_EVENTS = "user.events";
 export const QUEUE_USER_CREATED_CATALOG = "catalog.user_created";
 /** Fila para mensagens UserCreated que excederam MAX_RETRIES (dead-letter / inspeção). */

@@ -8,12 +8,14 @@ import {
   requestIdMiddleware,
   requestLoggingMiddleware,
   createErrorHandlerMiddleware,
-  createHealthHandler,
+  createDependencyReadinessChecks,
+  isOperationalEndpointPath,
+  registerOperationalEndpoints,
   apiVersionMiddleware,
 } from "@lframework/shared";
-import type { HttpErrorMapping } from "@lframework/shared";
+import type { HttpErrorMapping, ReadinessDependencies } from "@lframework/shared";
 
-export interface AppContainer {
+export interface AppContainer extends ReadinessDependencies {
   userRoutes: Router;
   authRoutes: Router;
   unidadeRoutes: Router;
@@ -44,7 +46,7 @@ export function createApp(
     max: 300,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => req.path === "/health",
+    skip: (req) => isOperationalEndpointPath(req.path),
   }));
   app.use(requestIdMiddleware);
   app.use(requestLoggingMiddleware);
@@ -78,7 +80,10 @@ export function createApp(
   app.use("/api", container.authRoutes);
   app.use("/api", container.unidadeRoutes);
 
-  app.get("/health", createHealthHandler("identity-service"));
+  registerOperationalEndpoints(app, {
+    serviceName: "identity-service",
+    readinessChecks: createDependencyReadinessChecks(container),
+  });
 
   app.use(
     createErrorHandlerMiddleware(
